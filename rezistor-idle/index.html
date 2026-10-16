@@ -1,0 +1,2846 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0f16">
+<title>Мастерская «Резистор»: Империя Ремонта</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f1822'/%3E%3Ctext y='.9em' x='50' text-anchor='middle' font-size='72'%3E%F0%9F%94%A7%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  color-scheme:dark;
+  --bg0:#06090e;
+  --bg1:#0c1520;
+  --panel-0:rgba(20,30,42,.7);
+  --panel-1:rgba(30,44,60,.55);
+  --panel-2:rgba(16,24,34,.75);
+  --line:rgba(80,120,160,.22);
+  --line-2:rgba(110,160,210,.5);
+  --line-3:rgba(140,190,240,.7);
+  --text:#eef4fa;
+  --text-2:#c6d3de;
+  --muted:#7c8996;
+  --green:#7be0a1;
+  --green-2:#3fa96b;
+  --blue:#6cb6ff;
+  --gold:#ffcf74;
+  --red:#ff8a8a;
+  --violet:#b28cff;
+  --cyan:#6ce6d4;
+  --orange:#ffab6b;
+  --shadow-1:0 4px 14px rgba(0,0,0,.3);
+  --shadow-2:0 10px 34px rgba(0,0,0,.4);
+  --shadow-3:0 30px 90px rgba(0,0,0,.7);
+  --radius:14px;
+  --radius-sm:10px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1400px 700px at 50% -30%,#1d3a52 0,transparent 55%),
+    radial-gradient(900px 600px at 100% 100%,#241b3a 0,transparent 55%),
+    radial-gradient(700px 500px at 0% 80%,#0f2530 0,transparent 60%),
+    linear-gradient(180deg,var(--bg0) 0,var(--bg1) 100%);
+  background-attachment:fixed;
+  color:var(--text);
+  font:14.5px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  min-height:100vh;
+}
+body::before{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(108,182,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(108,182,255,.025) 1px,transparent 1px);
+  background-size:40px 40px;
+  mask-image:radial-gradient(ellipse at center,black 40%,transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse at center,black 40%,transparent 80%);
+}
+button{color:inherit;font:inherit;cursor:pointer;border:none;background:none;transition:transform .14s ease,background .2s ease,border-color .2s ease,box-shadow .2s ease,color .2s ease}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:not(:disabled):active{transform:scale(.97)}
+button:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+input,textarea{font:inherit;color:inherit;background:#1a2838;border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none;width:100%;transition:border-color .2s}
+input:focus,textarea:focus{border-color:var(--blue)}
+input[type="checkbox"]{width:auto;cursor:pointer;accent-color:var(--green)}
+input[type="range"]{width:150px;cursor:pointer;accent-color:var(--blue)}
+h1,h2,h3{margin:0 0 8px;letter-spacing:-.01em}
+h1{font-size:20px;font-weight:800;background:linear-gradient(90deg,#eef4fa,#7be0a1,#6cb6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:17px}
+h3{font-size:15px;color:var(--text-2);font-weight:600}
+p{margin:6px 0}
+.muted{color:var(--muted);font-size:13px}
+.small{font-size:12px}
+.good{color:var(--green)}
+.bad{color:var(--red)}
+.gold{color:var(--gold)}
+.blue{color:var(--blue)}
+.violet{color:var(--violet)}
+.cyan{color:var(--cyan)}
+.app{max-width:1180px;margin:0 auto;padding:16px 14px 32px;position:relative;z-index:1}
+
+/* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
+.top{
+  display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;
+  gap:12px;padding:14px 18px;
+  background:
+    linear-gradient(180deg,rgba(30,46,62,.9),rgba(14,22,32,.98));
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow-2),inset 0 1px 0 rgba(255,255,255,.04);
+  position:relative;
+  overflow:hidden;
+}
+.top::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(108,182,255,.6),rgba(123,224,161,.5),transparent);
+}
+.brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:relative;z-index:1}
+.brand-ico{
+  font-size:28px;
+  filter:drop-shadow(0 0 14px rgba(108,182,255,.55));
+  display:grid;place-items:center;
+  width:44px;height:44px;border-radius:12px;
+  background:radial-gradient(circle at 35% 30%,rgba(108,182,255,.18),rgba(108,182,255,.02));
+  border:1px solid rgba(108,182,255,.2);
+}
+.res{display:flex;flex-wrap:wrap;gap:8px;align-items:center;position:relative;z-index:1}
+.res-item{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 13px;border-radius:22px;
+  background:linear-gradient(180deg,rgba(20,30,42,.9),rgba(10,17,26,.95));
+  border:1px solid var(--line);
+  font-weight:600;font-size:13.5px;
+  font-variant-numeric:tabular-nums;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 2px 8px rgba(0,0,0,.2);
+  transition:transform .15s ease,box-shadow .2s ease,border-color .2s ease;
+}
+.res-item:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 4px 14px rgba(0,0,0,.3)}
+.res-item .ico{font-size:14px;filter:drop-shadow(0 0 4px currentColor)}
+.res-item.money{color:var(--green);border-color:rgba(123,224,161,.25)}
+.res-item.money:hover{border-color:rgba(123,224,161,.5)}
+.res-item.rep{color:var(--gold);border-color:rgba(255,207,116,.25)}
+.res-item.rep:hover{border-color:rgba(255,207,116,.5)}
+.res-item.parts{color:var(--cyan);border-color:rgba(108,230,212,.25)}
+.res-item.parts:hover{border-color:rgba(108,230,212,.5)}
+.res-item.xp{color:var(--violet);border-color:rgba(178,140,255,.25)}
+.res-item.xp:hover{border-color:rgba(178,140,255,.5)}
+.active-event{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 12px;border-radius:20px;
+  background:linear-gradient(180deg,rgba(178,140,255,.28),rgba(178,140,255,.1));
+  border:1px solid rgba(178,140,255,.55);
+  font-size:12.5px;font-weight:700;
+  color:#ddc8ff;
+  animation:pulse-soft 2s ease-in-out infinite;
+}
+@keyframes pulse-soft{50%{opacity:.72}}
+
+/* ===== НАВИГАЦИЯ ===== */
+.nav{
+  display:flex;gap:4px;flex-wrap:wrap;
+  margin:14px 0;padding:6px;
+  background:linear-gradient(180deg,rgba(20,30,42,.9),rgba(12,20,30,.9));
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:var(--shadow-1),inset 0 1px 0 rgba(255,255,255,.03);
+  position:relative;
+}
+.nav button{
+  padding:9px 15px;border-radius:10px;
+  font-weight:500;color:var(--text-2);font-size:13.5px;
+  border:1px solid transparent;white-space:nowrap;position:relative;
+  transition:all .18s cubic-bezier(.4,0,.2,1);
+  display:flex;align-items:center;gap:6px;
+}
+.nav button:hover:not(.active){
+  background:rgba(108,182,255,.08);
+  color:var(--text);
+  transform:translateY(-1px);
+}
+.nav button.active{
+  background:linear-gradient(180deg,rgba(108,182,255,.26),rgba(108,182,255,.1));
+  border-color:rgba(108,182,255,.5);
+  color:#fff;
+  font-weight:600;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 14px rgba(108,182,255,.15);
+}
+.nav .dot{
+  position:absolute;top:5px;right:5px;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--red);
+  box-shadow:0 0 8px var(--red);
+  animation:blink 1.4s infinite;
+}
+@keyframes blink{50%{opacity:.3}}
+
+/* ===== ПАНЕЛЬ ===== */
+.panel{
+  padding:20px;border-radius:18px;
+  background:
+    linear-gradient(180deg,rgba(23,35,48,.92),rgba(13,21,30,.97));
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-2),inset 0 1px 0 rgba(255,255,255,.03);
+  min-height:400px;
+  position:relative;
+}
+.panel::before{
+  content:"";position:absolute;top:0;left:20px;right:20px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(108,182,255,.35),transparent);
+}
+.tab{display:none}
+.tab.active{display:block;animation:fadeIn .3s cubic-bezier(.4,0,.2,1)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ===== КАРТОЧКИ ===== */
+.card{
+  padding:16px;border-radius:12px;
+  background:linear-gradient(180deg,var(--panel-1),var(--panel-2));
+  border:1px solid var(--line);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+  transition:border-color .2s ease;
+}
+.card:hover{border-color:var(--line-2)}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+
+/* ===== БОЛЬШОЙ ДОХОД ===== */
+.income-hero{
+  padding:26px 22px;border-radius:18px;text-align:center;
+  background:
+    radial-gradient(600px 200px at 50% 0,rgba(123,224,161,.14),transparent 70%),
+    linear-gradient(180deg,rgba(30,60,44,.5),rgba(16,36,26,.55));
+  border:1px solid rgba(123,224,161,.35);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 24px rgba(0,0,0,.25);
+  margin-bottom:16px;
+  position:relative;
+  overflow:hidden;
+}
+.income-hero::before{
+  content:"";position:absolute;top:0;left:20px;right:20px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(123,224,161,.7),transparent);
+}
+.income-hero .label{
+  font-size:12px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.14em;
+  font-weight:600;
+}
+.income-hero .value{
+  font-size:clamp(30px,6vw,46px);font-weight:800;
+  color:var(--green);
+  text-shadow:0 0 30px rgba(123,224,161,.5);
+  margin:8px 0 4px;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;
+}
+.income-hero .sub{font-size:13px;color:var(--text-2)}
+.income-hero .bonuses{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+
+/* ===== ПЕРСОНАЛ ===== */
+.staff-card{
+  padding:14px;border-radius:12px;
+  background:linear-gradient(180deg,var(--panel-1),var(--panel-2));
+  border:1px solid var(--line);
+  display:flex;gap:14px;align-items:center;
+  transition:border-color .2s,transform .15s,box-shadow .2s;
+  position:relative;
+  overflow:hidden;
+}
+.staff-card::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--blue),transparent);
+  opacity:.4;
+  transition:opacity .2s;
+}
+.staff-card.owned{border-color:rgba(123,224,161,.4)}
+.staff-card.owned::before{background:linear-gradient(180deg,var(--green),transparent);opacity:1}
+.staff-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.staff-card.locked{opacity:.5;filter:grayscale(.5)}
+.staff-ico{
+  font-size:32px;flex-shrink:0;
+  width:52px;height:52px;display:grid;place-items:center;
+  border-radius:12px;
+  background:radial-gradient(circle at 40% 35%,rgba(108,182,255,.15),rgba(108,182,255,.02));
+  border:1px solid rgba(108,182,255,.12);
+}
+.staff-info{flex:1;min-width:0}
+.staff-name{font-weight:700;font-size:14px;margin-bottom:2px}
+.staff-meta{font-size:12px;color:var(--muted)}
+.staff-count{font-size:19px;font-weight:800;color:var(--cyan);font-variant-numeric:tabular-nums;margin-bottom:4px}
+
+/* ===== КНОПКИ ===== */
+.buy-btn{
+  padding:8px 12px;border-radius:9px;
+  background:linear-gradient(180deg,rgba(123,224,161,.18),rgba(123,224,161,.06));
+  border:1px solid rgba(123,224,161,.45);
+  font-weight:600;font-size:12.5px;white-space:nowrap;
+  transition:all .18s ease;
+}
+.buy-btn:hover:not(:disabled){
+  background:linear-gradient(180deg,rgba(123,224,161,.3),rgba(123,224,161,.12));
+  border-color:rgba(123,224,161,.7);
+  box-shadow:0 4px 12px rgba(123,224,161,.2);
+}
+.buy-btn:disabled{opacity:.5;cursor:not-allowed}
+.buy-btn.cant{border-color:var(--line);background:rgba(255,255,255,.03);color:var(--muted)}
+.premium-btn{
+  padding:11px 18px;border-radius:11px;
+  background:linear-gradient(180deg,rgba(108,182,255,.26),rgba(108,182,255,.08));
+  border:1px solid rgba(108,182,255,.55);
+  font-weight:700;font-size:13.5px;
+  transition:all .18s ease;
+}
+.premium-btn:hover:not(:disabled){
+  background:linear-gradient(180deg,rgba(108,182,255,.36),rgba(108,182,255,.15));
+  border-color:rgba(108,182,255,.8);
+  box-shadow:0 4px 16px rgba(108,182,255,.25);
+}
+
+/* ===== УЛУЧШЕНИЯ ===== */
+.upg-card{
+  padding:14px;border-radius:12px;
+  background:linear-gradient(180deg,var(--panel-1),var(--panel-2));
+  border:1px solid var(--line);
+  cursor:pointer;position:relative;
+  transition:all .18s ease;
+  overflow:hidden;
+}
+.upg-card:hover:not(.disabled):not(.bought){
+  border-color:var(--line-2);
+  transform:translateY(-2px);
+  box-shadow:0 10px 24px rgba(0,0,0,.3);
+}
+.upg-card.bought{
+  border-color:rgba(123,224,161,.4);
+  background:linear-gradient(180deg,rgba(30,60,44,.4),rgba(16,36,26,.45));
+}
+.upg-card.disabled{opacity:.5;cursor:not-allowed}
+.upg-card.is-new::after{
+  content:"NEW";
+  position:absolute;top:8px;right:8px;
+  padding:2px 8px;border-radius:20px;
+  font-size:9.5px;font-weight:800;
+  background:linear-gradient(180deg,#ff8585,#e06060);
+  color:#fff;letter-spacing:.08em;
+  box-shadow:0 2px 8px rgba(255,100,100,.4);
+  animation:blink 1.6s infinite;
+}
+.upg-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.upg-ico{font-size:24px;filter:drop-shadow(0 0 6px rgba(108,182,255,.3))}
+.upg-name{font-weight:700;font-size:13.5px}
+.upg-desc{font-size:12px;color:var(--muted);margin-bottom:10px;min-height:32px;line-height:1.4}
+.upg-foot{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:12.5px}
+.upg-cost{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+.upg-cost.cant{color:var(--muted)}
+.upg-level{color:var(--cyan);font-weight:600;font-variant-numeric:tabular-nums}
+.upg-badge{
+  position:absolute;top:-6px;right:-6px;
+  padding:2px 8px;border-radius:20px;
+  font-size:10px;font-weight:800;
+  background:linear-gradient(180deg,#8ecbff,#5b9fd6);
+  color:#0a1722;letter-spacing:.04em;
+  box-shadow:0 2px 8px rgba(108,182,255,.3);
+}
+.upg-badge.max{background:linear-gradient(180deg,#ffd98f,#c69a35);color:#231601;box-shadow:0 2px 8px rgba(255,207,116,.4)}
+.cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.cat-tabs button{
+  padding:8px 16px;border-radius:9px;
+  background:rgba(15,23,34,.7);
+  border:1px solid var(--line);
+  font-size:13px;font-weight:500;
+  transition:all .18s ease;
+  display:flex;align-items:center;gap:5px;
+}
+.cat-tabs button:hover:not(.active){
+  border-color:var(--line-2);
+  background:rgba(108,182,255,.08);
+}
+.cat-tabs button.active{
+  background:linear-gradient(180deg,rgba(108,182,255,.26),rgba(108,182,255,.08));
+  border-color:rgba(108,182,255,.55);
+  color:#fff;
+  font-weight:600;
+}
+
+/* ===== ЗАКАЗ ===== */
+.order-card{
+  padding:18px;border-radius:14px;
+  background:
+    radial-gradient(400px 150px at 0% 0,rgba(108,182,255,.08),transparent 60%),
+    linear-gradient(180deg,rgba(30,44,60,.7),rgba(16,24,34,.8));
+  border:1px solid var(--line);
+  margin-bottom:14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+}
+.client-row{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.client-av{
+  width:64px;height:64px;flex-shrink:0;
+  display:grid;place-items:center;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#3d5e79,#1a2a3a);
+  font-size:32px;
+  box-shadow:inset 0 0 0 2px rgba(108,182,255,.25),0 8px 20px rgba(0,0,0,.4);
+}
+.client-name{font-weight:700;font-size:16px;letter-spacing:-.01em}
+.client-role{font-size:12.5px;color:var(--muted)}
+.pill{
+  display:inline-block;padding:4px 11px;margin:3px 5px 3px 0;
+  border:1px solid var(--line);border-radius:20px;
+  font-size:11.5px;color:var(--text-2);
+  background:rgba(108,182,255,.05);
+  transition:border-color .2s,background .2s;
+}
+.pill:hover{border-color:var(--line-2);background:rgba(108,182,255,.1)}
+.test-btn{
+  display:block;width:100%;padding:11px 14px;margin-bottom:6px;
+  text-align:left;border-radius:10px;
+  background:linear-gradient(180deg,#1a2838,#16202c);
+  border:1px solid var(--line);
+  font-weight:500;font-size:13.5px;
+  transition:all .15s ease;
+}
+.test-btn:hover:not(:disabled){
+  border-color:var(--line-2);
+  transform:translateX(3px);
+  background:linear-gradient(180deg,#223648,#1a2634);
+}
+.test-btn.done{
+  background:linear-gradient(180deg,rgba(123,224,161,.14),rgba(123,224,161,.03));
+  border-color:rgba(123,224,161,.4);
+  color:var(--green);
+}
+.test-result{
+  margin-top:8px;padding:12px 14px;border-radius:9px;
+  background:linear-gradient(90deg,rgba(108,182,255,.15),rgba(108,182,255,.02));
+  border-left:3px solid var(--blue);
+  font-size:13.5px;
+  line-height:1.5;
+}
+.choice-btn{
+  display:block;width:100%;padding:12px 15px;margin-bottom:6px;
+  text-align:left;border-radius:10px;
+  background:linear-gradient(180deg,#1a2838,#16202c);
+  border:1px solid var(--line);
+  font-weight:500;font-size:13.5px;
+  transition:all .15s ease;
+}
+.choice-btn:hover:not(:disabled){
+  border-color:var(--line-2);
+  transform:translateX(3px);
+  background:linear-gradient(180deg,#223648,#1a2634);
+}
+.choice-btn.selected{
+  border-color:var(--blue);
+  background:linear-gradient(180deg,rgba(108,182,255,.24),rgba(108,182,255,.08));
+  box-shadow:inset 0 0 0 1px rgba(108,182,255,.3);
+}
+.repair-btn{
+  padding:13px 15px;border-radius:11px;
+  background:linear-gradient(180deg,rgba(42,62,80,.9),rgba(28,42,56,.9));
+  border:1px solid rgba(95,135,175,.4);
+  font-weight:500;font-size:13.5px;
+  text-align:left;display:flex;align-items:center;gap:11px;
+  transition:all .15s ease;
+}
+.repair-btn:hover:not(:disabled){
+  border-color:var(--green);
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(123,224,161,.15);
+}
+.repair-btn.done{
+  background:rgba(28,60,44,.55);
+  border-color:rgba(123,224,161,.45);
+  opacity:.75;
+}
+.repair-btn::before{content:"›";font-size:20px;color:var(--green);opacity:.75;flex-shrink:0;font-weight:800}
+
+/* ===== ПРОГРЕСС ===== */
+.progress{
+  height:10px;border-radius:10px;
+  background:#0a121a;
+  overflow:hidden;margin:12px 0;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.5);
+}
+.progress>div{
+  height:100%;
+  background:linear-gradient(90deg,var(--blue),var(--green));
+  transform-origin:left;
+  transition:transform .4s cubic-bezier(.4,0,.2,1);
+  border-radius:10px;
+  box-shadow:0 0 12px rgba(123,224,161,.4);
+}
+
+/* ===== КОДЕКС ===== */
+.codex-card{
+  padding:14px;border-radius:12px;
+  background:linear-gradient(180deg,var(--panel-1),var(--panel-2));
+  border:1px solid var(--line);
+  position:relative;
+  transition:transform .15s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.codex-card:hover{transform:translateY(-2px)}
+.codex-card.undiscovered{opacity:.55;filter:grayscale(.75)}
+.codex-card[data-rarity="uncommon"]{border-color:rgba(123,224,161,.4)}
+.codex-card[data-rarity="uncommon"]:hover{box-shadow:0 8px 24px rgba(123,224,161,.15)}
+.codex-card[data-rarity="rare"]{border-color:rgba(108,182,255,.5)}
+.codex-card[data-rarity="rare"]:hover{box-shadow:0 8px 24px rgba(108,182,255,.18)}
+.codex-card[data-rarity="epic"]{border-color:rgba(178,140,255,.55)}
+.codex-card[data-rarity="epic"]:hover{box-shadow:0 8px 24px rgba(178,140,255,.2)}
+.codex-card[data-rarity="legendary"]{border-color:rgba(255,207,116,.6)}
+.codex-card[data-rarity="legendary"]:hover{box-shadow:0 8px 24px rgba(255,207,116,.25)}
+.codex-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.codex-ico{font-size:28px}
+.codex-name{font-weight:700;font-size:13.5px}
+.codex-rarity{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.codex-body{font-size:12.5px;color:var(--text-2);line-height:1.5}
+
+/* ===== ПРЕСТИЖ ===== */
+.prestige-hero{
+  padding:28px 24px;border-radius:18px;text-align:center;
+  background:
+    radial-gradient(500px 200px at 50% 0,rgba(178,140,255,.2),transparent 70%),
+    linear-gradient(180deg,rgba(60,30,80,.5),rgba(30,16,44,.5));
+  border:1px solid rgba(178,140,255,.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 30px rgba(178,140,255,.1);
+  margin-bottom:16px;
+  position:relative;
+  overflow:hidden;
+}
+.prestige-hero::before{
+  content:"";position:absolute;top:0;left:20px;right:20px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(178,140,255,.7),transparent);
+}
+.prestige-hero .value{
+  font-size:clamp(36px,8vw,56px);font-weight:800;
+  color:var(--violet);
+  text-shadow:0 0 40px rgba(178,140,255,.6);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;
+}
+.prestige-hero .label{
+  font-size:12px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.14em;
+  font-weight:600;
+}
+.btn-xp{
+  padding:13px 28px;border-radius:12px;
+  background:linear-gradient(180deg,#c9a8ff,#8a63d1);
+  color:#160a24;font-weight:800;font-size:15px;
+  box-shadow:0 8px 24px rgba(178,140,255,.4),inset 0 1px 0 rgba(255,255,255,.3);
+  margin-top:12px;
+  transition:all .18s ease;
+}
+.btn-xp:hover:not(:disabled){
+  background:linear-gradient(180deg,#d7bcff,#a07de0);
+  transform:translateY(-1px);
+  box-shadow:0 10px 30px rgba(178,140,255,.5),inset 0 1px 0 rgba(255,255,255,.4);
+}
+
+/* ===== СТАТИСТИКА ===== */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:16px}
+.stat-box{
+  padding:14px;border-radius:12px;
+  background:linear-gradient(180deg,var(--panel-1),var(--panel-2));
+  border:1px solid var(--line);
+  transition:border-color .2s,transform .15s;
+}
+.stat-box:hover{border-color:var(--line-2);transform:translateY(-1px)}
+.stat-box .label{
+  font-size:11px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.08em;
+  font-weight:600;margin-bottom:5px;
+}
+.stat-box .value{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+/* ===== ДОСТИЖЕНИЯ ===== */
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.ach{
+  padding:12px;border-radius:12px;
+  background:linear-gradient(180deg,var(--panel-1),var(--panel-2));
+  border:1px solid var(--line);
+  display:flex;gap:12px;align-items:center;
+  transition:all .18s ease;
+}
+.ach.locked{opacity:.4;filter:grayscale(.8)}
+.ach.unlocked{
+  border-color:rgba(255,207,116,.45);
+  background:linear-gradient(180deg,rgba(60,44,30,.4),rgba(36,26,16,.4));
+  box-shadow:0 4px 16px rgba(255,207,116,.1);
+}
+.ach.unlocked:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,207,116,.2)}
+.ach-ico{
+  font-size:26px;flex-shrink:0;
+  width:46px;height:46px;display:grid;place-items:center;
+  border-radius:10px;
+  background:rgba(255,207,116,.1);
+}
+.ach-name{font-weight:700;font-size:13px}
+.ach-desc{font-size:11.5px;color:var(--muted);line-height:1.4}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.section-title h2{margin:0}
+
+/* ===== МОДАЛЬНЫЕ ОКНА ===== */
+.overlay{
+  position:fixed;inset:0;z-index:80;display:none;place-items:center;padding:16px;
+  background:radial-gradient(circle,rgba(6,10,15,.9),rgba(6,10,15,.98));
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  animation:overlayIn .25s ease;
+}
+.overlay.show{display:grid}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+.modal{
+  width:min(100%,620px);max-height:88vh;overflow:auto;
+  padding:24px;border-radius:18px;
+  background:linear-gradient(180deg,rgba(30,46,62,.99),rgba(14,22,32,.99));
+  border:1px solid var(--line-2);
+  box-shadow:var(--shadow-3),0 0 0 1px rgba(108,182,255,.1);
+  animation:modalIn .35s cubic-bezier(.34,1.56,.64,1);
+  position:relative;
+}
+.modal::before{
+  content:"";position:absolute;top:0;left:24px;right:24px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(108,182,255,.6),rgba(123,224,161,.5),transparent);
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:none}}
+.modal h2{font-size:20px;margin-bottom:14px}
+
+/* ===== ТОСТЫ ===== */
+.toast-wrap{
+  position:fixed;bottom:16px;right:16px;z-index:90;
+  display:flex;flex-direction:column;gap:8px;
+  max-width:calc(100vw - 32px);pointer-events:none;
+}
+.toast{
+  padding:12px 18px;border-radius:12px;
+  background:linear-gradient(180deg,rgba(42,62,80,.98),rgba(24,38,52,.98));
+  border:1px solid var(--line-2);
+  box-shadow:0 12px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05);
+  font-weight:500;font-size:13.5px;
+  pointer-events:auto;max-width:360px;
+  animation:toastIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+.toast.ach{
+  border-color:rgba(255,207,116,.65);
+  background:linear-gradient(180deg,rgba(80,60,30,.98),rgba(40,30,16,.98));
+}
+.toast.event{
+  border-color:rgba(178,140,255,.65);
+  background:linear-gradient(180deg,rgba(60,40,80,.98),rgba(30,20,44,.98));
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px) scale(.9)}to{opacity:1;transform:none}}
+
+/* ===== FLOAT TEXT ===== */
+.float-text{
+  position:fixed;pointer-events:none;z-index:75;
+  font-weight:800;font-size:16px;
+  text-shadow:0 3px 16px rgba(0,0,0,.75);
+  animation:floatUp 1.4s cubic-bezier(.22,.61,.36,1) forwards;
+}
+@keyframes floatUp{
+  0%{opacity:0;transform:translate(-50%,0) scale(.7)}
+  15%{opacity:1;transform:translate(-50%,-10px) scale(1.15)}
+  100%{opacity:0;transform:translate(-50%,-80px) scale(1)}
+}
+
+/* ===== ДЕЙЛИ ===== */
+.daily-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:12px}
+.daily-day{
+  padding:12px 4px;border-radius:11px;text-align:center;
+  background:linear-gradient(180deg,var(--panel-1),var(--panel-2));
+  border:1px solid var(--line);
+  font-size:11.5px;
+  transition:all .18s ease;
+}
+.daily-day.today{
+  border-color:var(--gold);
+  box-shadow:0 0 20px rgba(255,207,116,.2);
+  transform:scale(1.05);
+}
+.daily-day.claimed{
+  border-color:rgba(123,224,161,.5);
+  background:linear-gradient(180deg,rgba(30,60,44,.4),rgba(16,36,26,.4));
+}
+.daily-day .day-icon{font-size:22px;margin-bottom:4px;display:block}
+
+/* ===== АЛЬБОМЫ ===== */
+.album-card{
+  padding:16px;border-radius:12px;
+  background:linear-gradient(180deg,var(--panel-1),var(--panel-2));
+  border:1px solid var(--line);
+  transition:all .18s ease;
+}
+.album-card:hover{transform:translateY(-2px);border-color:var(--line-2)}
+.album-card.complete{
+  border-color:rgba(255,207,116,.6);
+  box-shadow:0 6px 24px rgba(255,207,116,.15);
+}
+.album-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.album-slot{
+  aspect-ratio:1;border-radius:9px;
+  background:rgba(108,182,255,.05);
+  border:1px dashed var(--line);
+  display:grid;place-items:center;font-size:24px;
+  transition:all .25s ease;
+}
+.album-slot.filled{
+  border-style:solid;
+  border-color:rgba(123,224,161,.55);
+  background:rgba(123,224,161,.1);
+}
+
+/* ===== НАСТРОЙКИ ===== */
+.settings-row{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:11px 0;
+  border-bottom:1px solid var(--line);
+}
+.settings-row:last-child{border-bottom:none}
+.settings-row label{cursor:pointer}
+
+/* ===== МУЗЫКА ===== */
+.music-ctrl{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:20px;
+  background:linear-gradient(180deg,rgba(178,140,255,.15),rgba(178,140,255,.05));
+  border:1px solid rgba(178,140,255,.35);
+  font-size:12.5px;font-weight:600;
+  color:#ddc8ff;
+  cursor:pointer;
+  transition:all .18s ease;
+}
+.music-ctrl:hover{
+  border-color:rgba(178,140,255,.6);
+  background:linear-gradient(180deg,rgba(178,140,255,.25),rgba(178,140,255,.1));
+  transform:translateY(-1px);
+}
+.music-ctrl.playing{
+  background:linear-gradient(180deg,rgba(178,140,255,.3),rgba(178,140,255,.15));
+  box-shadow:0 0 16px rgba(178,140,255,.3);
+}
+
+/* ===== АДАПТИВ ===== */
+@media(max-width:640px){
+  .app{padding:10px 10px 24px}
+  .top{padding:12px 14px;gap:10px}
+  h1{font-size:17px}
+  .panel{padding:14px;border-radius:14px}
+  .res-item{padding:6px 10px;font-size:12.5px}
+  .nav{padding:5px;gap:3px}
+  .nav button{padding:8px 10px;font-size:12.5px}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .toast-wrap{bottom:10px;right:10px;left:10px;max-width:none}
+  .toast{max-width:none}
+  .daily-grid{grid-template-columns:repeat(4,1fr)}
+  .income-hero{padding:20px 16px}
+  .prestige-hero{padding:22px 16px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001s!important;
+    animation-iteration-count:1!important;
+    transition-duration:.001s!important;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand">
+      <span class="brand-ico">🔧</span>
+      <div>
+        <h1>Мастерская «Резистор»</h1>
+        <div class="muted small" id="subtitle">Империя Ремонта · Этап 1</div>
+      </div>
+    </div>
+    <div class="res">
+      <div class="active-event hidden" id="active-event">
+        <span id="event-icon">🔥</span>
+        <span id="event-name"></span>
+        <span id="event-timer" class="muted small"></span>
+      </div>
+      <div class="res-item money"><span class="ico">💰</span><span id="res-money">0</span></div>
+      <div class="res-item rep"><span class="ico">⭐</span><span id="res-rep">0</span></div>
+      <div class="res-item parts"><span class="ico">🔧</span><span id="res-parts">0</span></div>
+      <div class="res-item xp"><span class="ico">💎</span><span id="res-xp">0</span></div>
+      <button class="music-ctrl hidden" id="music-btn" title="Включить фоновую музыку">
+        <span id="music-btn-icon">🎵</span><span id="music-btn-label">Музыка</span>
+      </button>
+    </div>
+  </div>
+  <div class="nav" id="nav"></div>
+  <div class="panel">
+    <div class="tab active" id="tab-workshop"></div>
+    <div class="tab" id="tab-orders"></div>
+    <div class="tab" id="tab-upgrades"></div>
+    <div class="tab" id="tab-codex"></div>
+    <div class="tab" id="tab-albums"></div>
+    <div class="tab" id="tab-quests"></div>
+    <div class="tab" id="tab-prestige"></div>
+    <div class="tab" id="tab-stats"></div>
+    <div class="tab" id="tab-settings"></div>
+  </div>
+</div>
+<div class="overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+      <button class="buy-btn" id="modal-cancel">Отмена</button>
+      <button class="premium-btn" id="modal-ok">OK</button>
+    </div>
+  </div>
+</div>
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   DECIMAL
+   ============================================================ */
+class Decimal {
+  constructor(mantissa, exponent){
+    if (mantissa && typeof mantissa === 'object' && 'm' in mantissa){
+      this.m = mantissa.m;
+      this.e = mantissa.e;
+    } else {
+      this.m = mantissa || 0;
+      this.e = exponent || 0;
+      this.normalize();
+    }
+  }
+  normalize(){
+    if (this.m === 0 || !isFinite(this.m)){ this.m = 0; this.e = 0; return; }
+    const sign = this.m < 0 ? -1 : 1;
+    let abs = Math.abs(this.m);
+    const exp = Math.floor(Math.log10(abs));
+    if (exp !== 0){
+      abs = abs / Math.pow(10, exp);
+      this.e = this.e + exp;
+    }
+    this.m = sign * abs;
+  }
+  toNumber(){ return this.m === 0 ? 0 : this.m * Math.pow(10, this.e); }
+  add(o){
+    o = o instanceof Decimal ? o : new Decimal(o);
+    let a = this, b = o;
+    if (a.e > b.e){ const t = a; a = b; b = t; }
+    const diff = b.e - a.e;
+    if (diff > 17) return b.clone();
+    return new Decimal(a.m + b.m * Math.pow(10, diff), a.e);
+  }
+  sub(o){ o = o instanceof Decimal ? o : new Decimal(o); return this.add(o.clone().mul(-1)); }
+  mul(o){ o = o instanceof Decimal ? o : new Decimal(o); return new Decimal(this.m * o.m, this.e + o.e); }
+  div(o){
+    o = o instanceof Decimal ? o : new Decimal(o);
+    if (o.m === 0) return new Decimal(0);
+    return new Decimal(this.m / o.m, this.e - o.e);
+  }
+  pow(n){
+    if (this.m === 0) return new Decimal(0);
+    if (n === 0) return new Decimal(1);
+    if (Number.isInteger(n)) return new Decimal(Math.pow(this.m, n), this.e * n);
+    return new Decimal(Math.pow(this.toNumber(), n));
+  }
+  clone(){ return new Decimal(this.m, this.e); }
+  lt(o){ o = o instanceof Decimal ? o : new Decimal(o); return this.e < o.e || (this.e === o.e && this.m < o.m); }
+  gt(o){ o = o instanceof Decimal ? o : new Decimal(o); return this.e > o.e || (this.e === o.e && this.m > o.m); }
+  lte(o){ return !this.gt(o); }
+  gte(o){ return !this.lt(o); }
+  eq(o){ o = o instanceof Decimal ? o : new Decimal(o); return this.e === o.e && this.m === o.m; }
+  valueOf(){ return this.toNumber(); }
+  toString(){
+    if (this.m === 0) return '0';
+    if (this.e >= 0 && this.e < 3) return String(Math.round(this.m * Math.pow(10, this.e)));
+    return fmtShort(this);
+  }
+}
+function dec(n){ return n instanceof Decimal ? n : new Decimal(n); }
+
+const SUFFIXES = ['','K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc','Ud','Dd','Td','Qad','Qid','Sxd','Spd','Ocd','Nod','Vg'];
+function fmtShort(d){
+  if (!(d instanceof Decimal)) d = dec(d);
+  if (d.m === 0) return '0';
+  if (d.e < 3) {
+    const num = d.m * Math.pow(10, d.e);
+    if (num < 0.01) return num.toFixed(3).replace(/\.?0+$/, '');
+    return num.toFixed(num < 100 ? 2 : 0).replace(/\.?0+$/, '');
+  }
+  let tier = Math.floor(d.e / 3);
+  let m = d.m;
+  if (m >= 999.995 && tier < SUFFIXES.length - 1){ m = m / 1000; tier = tier + 1; }
+  if (tier >= SUFFIXES.length) return m.toFixed(2) + 'e' + d.e;
+  return m.toFixed(2) + SUFFIXES[tier];
+}
+function fmt(n){ return fmtShort(dec(n)); }
+function fmtInt(n){
+  const v = dec(n).toNumber();
+  if (!isFinite(v) || v > 1e15) return fmtShort(dec(n));
+  return Math.floor(v).toLocaleString('ru-RU');
+}
+
+const $ = id => document.getElementById(id);
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+function now(){ return Date.now(); }
+function choice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function today(){ return new Date().toISOString().slice(0,10); }
+
+/* ============================================================
+   SOUND MANAGER v6 — мягкие звуки
+   • Только sine/triangle
+   • Плавная атака 20мс (без щелчков)
+   • Lowpass фильтр 2800Гц (убирает резкость)
+   • Уровни выровнены (0.05–0.10)
+   • Анти-спам 80мс между одинаковыми звуками
+   ============================================================ */
+const SoundManager = (function(){
+  let ctx = null;
+  let masterGain = null;
+  let enabled = true;
+  let volume = 0.5;
+  let lastPlay = {};
+  const MIN_INTERVAL = 80;
+
+  function ensureCtx(){
+    if (ctx) return ctx;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      ctx = new Ctx();
+      masterGain = ctx.createGain();
+      masterGain.gain.value = volume;
+      masterGain.connect(ctx.destination);
+    } catch(e){ ctx = null; }
+    return ctx;
+  }
+
+  function unlock(){
+    const c = ensureCtx();
+    if (c && c.state === 'suspended') c.resume().catch(()=>{});
+  }
+
+  /**
+   * @param {number} freq — частота в Гц
+   * @param {number} dur  — длительность в секундах
+   * @param {string} type — 'sine' | 'triangle' (остальное игнорируется)
+   * @param {number} gain — базовая громкость (0..1)
+   * @param {number|null} slideTo — плавное скольжение к этой частоте
+   */
+  function tone(freq, dur, type, gain, slideTo){
+    const c = ensureCtx();
+    if (!c || !enabled || volume <= 0) return;
+    if (type !== 'sine' && type !== 'triangle') type = 'sine';
+    try {
+      const t0 = c.currentTime;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      const filter = c.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2800;
+      filter.Q.value = 0.6;
+
+      osc.type = type;
+      osc.frequency.value = freq;
+      if (slideTo){
+        try { osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur); }
+        catch(e){ /* игнор */ }
+      }
+
+      const peak = Math.max(0.001, gain);
+      // Плавная атака и мягкий релиз — убирают «клик» на старте/конце
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(peak, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+      osc.connect(filter);
+      filter.connect(g);
+      g.connect(masterGain);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    } catch(e){ /* игнор */ }
+  }
+
+  /** Проиграть последовательность нот [freq, dur, delay] */
+  function notes(seq){
+    for (const [freq, dur, delay, gain] of seq){
+      setTimeout(() => tone(freq, dur, 'sine', gain || 0.07), delay || 0);
+    }
+  }
+
+  function play(id){
+    if (!enabled) return;
+    const t = performance.now();
+    if (lastPlay[id] && t - lastPlay[id] < MIN_INTERVAL) return;
+    lastPlay[id] = t;
+
+    switch(id){
+      case 'coin':
+        notes([[660, 0.10, 0, 0.075], [880, 0.14, 60, 0.070]]);
+        break;
+      case 'rep':
+        tone(780, 0.14, 'sine', 0.075);
+        break;
+      case 'parts':
+        tone(520, 0.10, 'triangle', 0.060);
+        break;
+      case 'xp':
+        notes([[880, 0.12, 0, 0.075], [1320, 0.22, 90, 0.065]]);
+        break;
+      case 'buy':
+        tone(520, 0.12, 'triangle', 0.075);
+        break;
+      case 'click':
+        tone(660, 0.05, 'sine', 0.035);
+        break;
+      case 'error':
+        tone(220, 0.22, 'triangle', 0.085, 165);
+        break;
+      case 'success':
+        notes([[660, 0.10, 0, 0.075], [880, 0.16, 70, 0.070]]);
+        break;
+      case 'achievement':
+        notes([[660, 0.10, 0, 0.070], [880, 0.10, 70, 0.070], [1180, 0.20, 140, 0.075]]);
+        break;
+      case 'event':
+        tone(520, 0.22, 'triangle', 0.075, 780);
+        break;
+      case 'prestige':
+        notes([[440, 0.28, 0, 0.085], [660, 0.28, 180, 0.085], [990, 0.40, 360, 0.080]]);
+        break;
+      case 'codex':
+        notes([[660, 0.10, 0, 0.070], [990, 0.18, 80, 0.070]]);
+        break;
+      case 'repair_ok':
+        tone(880, 0.08, 'sine', 0.055);
+        break;
+      case 'repair_err':
+        tone(260, 0.16, 'triangle', 0.075, 200);
+        break;
+      case 'daily':
+        notes([[660, 0.10, 0, 0.075], [880, 0.10, 90, 0.075], [1180, 0.20, 180, 0.080]]);
+        break;
+      case 'music_start':
+        tone(520, 0.10, 'sine', 0.060);
+        break;
+    }
+  }
+
+  return {
+    play,
+    unlock,
+    setEnabled(v){ enabled = !!v; },
+    setVolume(v){ volume = Math.max(0, Math.min(1, v)); if (masterGain) masterGain.gain.value = volume; },
+    get enabled(){ return enabled; },
+    get volume(){ return volume; }
+  };
+})();
+
+document.addEventListener('click', () => SoundManager.unlock(), { once: true, passive: true });
+document.addEventListener('touchstart', () => SoundManager.unlock(), { once: true, passive: true });
+
+/* ============================================================
+   MUSIC MANAGER — фоновая музыка
+   Путь: assets/audio/workshop-theme.mp3
+   ============================================================ */
+const MusicManager = (function(){
+  const MUSIC_PATH = 'assets/audio/workshop-theme.mp3';
+  let audio = null;
+  let playing = false;
+  let available = true;  // false, если файл не найден / ошибка загрузки
+  let enabled = false;   // настройка игрока
+  let volume = 0.22;     // 22% — умеренно тихо
+  let initDone = false;
+
+  function ensure(){
+    if (audio) return audio;
+    if (!available) return null;
+    try {
+      audio = new Audio();
+      audio.src = MUSIC_PATH;
+      audio.loop = true;
+      audio.preload = 'none';
+      audio.volume = volume;
+      audio.crossOrigin = 'anonymous';
+      audio.addEventListener('error', onError);
+      audio.addEventListener('canplay', () => { available = true; });
+    } catch(e){
+      available = false;
+      audio = null;
+    }
+    return audio;
+  }
+
+  function onError(){
+    available = false;
+    playing = false;
+    updateHeaderBtn();
+    // Только один раз сообщаем игроку
+    if (!onError._notified){
+      onError._notified = true;
+      if (enabled){
+        toast('🎵 Музыка недоступна — проверьте путь assets/audio/workshop-theme.mp3', 'event');
+      }
+    }
+  }
+
+  function updateHeaderBtn(){
+    const btn = document.getElementById('music-btn');
+    if (!btn) return;
+    const icon = document.getElementById('music-btn-icon');
+    const label = document.getElementById('music-btn-label');
+    if (!btn || !icon || !label) return;
+
+    if (!available){
+      btn.classList.add('hidden');
+      return;
+    }
+    btn.classList.remove('hidden');
+    if (playing){
+      btn.classList.add('playing');
+      icon.textContent = '🔊';
+      label.textContent = 'Играет';
+    } else {
+      btn.classList.remove('playing');
+      icon.textContent = '🎵';
+      label.textContent = 'Музыка';
+    }
+  }
+
+  async function play(){
+    if (!enabled) return;
+    const a = ensure();
+    if (!a) return;
+    try {
+      await a.play();
+      playing = true;
+    } catch(e){
+      // NotAllowedError — автоплей заблокирован, ждём gesture
+      if (e && e.name === 'NotAllowedError'){
+        playing = false;
+      } else {
+        available = false;
+        playing = false;
+      }
+    }
+    updateHeaderBtn();
+  }
+
+  function pause(){
+    if (!audio) { playing = false; updateHeaderBtn(); return; }
+    try { audio.pause(); } catch(e){}
+    playing = false;
+    updateHeaderBtn();
+  }
+
+  function setVolume(v){
+    volume = Math.max(0, Math.min(1, v));
+    if (audio) audio.volume = volume;
+  }
+
+  function setEnabled(v){
+    enabled = !!v;
+    if (enabled){
+      // Требует user gesture для запуска
+      play();
+    } else {
+      pause();
+    }
+    updateHeaderBtn();
+  }
+
+  function toggle(){
+    if (!available){ toast('🎵 Музыка недоступна', 'event'); return; }
+    setEnabled(!enabled);
+  }
+
+  return {
+    play, pause, toggle, setEnabled, setVolume,
+    get playing(){ return playing; },
+    get available(){ return available; },
+    get enabled(){ return enabled; },
+    get volume(){ return volume; },
+    updateHeaderBtn,
+    _initDone(){ initDone = true; }
+  };
+})();
+
+/* ============================================================
+   ДАННЫЕ
+   ============================================================ */
+const STAFF = [
+  { id:'student',   name:'Студент-практикант',      icon:'🎓', baseCost:50,        baseIncome:0.5 },
+  { id:'handyman',  name:'Мастер-самоучка',         icon:'🔨', baseCost:800,       baseIncome:6 },
+  { id:'technician',name:'Опытный техник',          icon:'👨‍🔧', baseCost:12000,     baseIncome:75 },
+  { id:'engineer',  name:'Инженер-электронщик',     icon:'👨‍💻', baseCost:180000,    baseIncome:900 },
+  { id:'robot',     name:'Робот-паяльщик',          icon:'🤖', baseCost:2.5e6,     baseIncome:12000 },
+  { id:'ai',        name:'ИИ-диагност',             icon:'🧠', baseCost:4e7,       baseIncome:180000 },
+  { id:'lab',       name:'Лаборатория восстановления', icon:'🔬', baseCost:8e8,      baseIncome:2800000 },
+  { id:'quantum',   name:'Квантовый ремонт',        icon:'⚛️', baseCost:1.5e10,    baseIncome:45000000 },
+];
+const STAFF_COST_MULT = 1.15;
+
+const UPGRADES = [
+  { id:'scr',   cat:'tools', name:'Точные отвёртки',         icon:'🪛', cost:300,       costMult:1.5, maxLevel:5,  desc:'+8% к доходу за уровень' },
+  { id:'multi', cat:'tools', name:'Мультиметр',              icon:'📏', cost:1500,      costMult:1.6, maxLevel:5,  desc:'+10% доход. Открывает мультитест' },
+  { id:'solder',cat:'tools', name:'Паяльная станция',        icon:'🔥', cost:9000,      costMult:1.7, maxLevel:5,  desc:'+15% доход' },
+  { id:'scope', cat:'tools', name:'Осциллограф',             icon:'📺', cost:70000,     costMult:1.8, maxLevel:5,  desc:'+20% доход' },
+  { id:'ir',    cat:'tools', name:'ИК-станция',              icon:'🌡️', cost:8e5,       costMult:1.9, maxLevel:5,  desc:'+25% доход' },
+  { id:'micro', cat:'tools', name:'Микроскоп',               icon:'🔬', cost:1e7,       costMult:2.0, maxLevel:5,  desc:'+30% доход' },
+  { id:'bga',   cat:'tools', name:'BGA-станция',             icon:'🎛️', cost:2e8,       costMult:2.2, maxLevel:5,  desc:'+40% доход' },
+  { id:'nano',  cat:'tools', name:'Нано-паяльник',           icon:'⚡', cost:8e9,       costMult:2.5, maxLevel:5,  desc:'+60% доход' },
+  { id:'rack',  cat:'facility', name:'Стеллаж для деталей',  icon:'🗄️', cost:500,       costMult:1.4, maxLevel:10, desc:'+1 к максимуму запчастей' },
+  { id:'bench', cat:'facility', name:'Второй верстак',       icon:'🛠️', cost:3000,      costMult:1.5, maxLevel:10, desc:'+5% к скорости работы' },
+  { id:'room',  cat:'facility', name:'Отдельная комната',    icon:'🚪', cost:30000,     costMult:1.6, maxLevel:5,  desc:'+10% к доходу' },
+  { id:'vent',  cat:'facility', name:'Вентиляция',           icon:'💨', cost:250000,    costMult:1.7, maxLevel:5,  desc:'+8% к доходу' },
+  { id:'server',cat:'facility', name:'Серверная',            icon:'🖥️', cost:2e6,       costMult:1.8, maxLevel:5,  desc:'+25% к доходу от ИИ' },
+  { id:'clean', cat:'facility', name:'Чистая зона',          icon:'🧼', cost:4e7,       costMult:2.0, maxLevel:5,  desc:'+20% к редкости находок' },
+  { id:'bunker',cat:'facility', name:'Бункер-лаборатория',   icon:'🏭', cost:1.5e9,     costMult:2.2, maxLevel:5,  desc:'+50% к доходу' },
+  { id:'flyer', cat:'marketing', name:'Листовки',            icon:'📄', cost:800,       costMult:1.5, maxLevel:10, desc:'+1 заказ в час' },
+  { id:'site',  cat:'marketing', name:'Сайт мастерской',     icon:'🌐', cost:10000,     costMult:1.6, maxLevel:10, desc:'+2 заказа в час' },
+  { id:'ads',   cat:'marketing', name:'Реклама в соцсетях',  icon:'📱', cost:120000,    costMult:1.7, maxLevel:10, desc:'+5 заказов в час' },
+  { id:'review',cat:'marketing', name:'Программа отзывов',   icon:'⭐', cost:1e6,       costMult:1.8, maxLevel:5,  desc:'+15% к репутации' },
+  { id:'billb', cat:'marketing', name:'Билборды',            icon:'🛣️', cost:2e7,       costMult:2.0, maxLevel:5,  desc:'+50% к потоку клиентов' },
+  { id:'tv',    cat:'marketing', name:'Реклама на ТВ',       icon:'📺', cost:1e9,       costMult:2.3, maxLevel:5,  desc:'+100% к потоку' },
+  { id:'global',cat:'marketing', name:'Мировая экспансия',   icon:'🌍', cost:5e10,      costMult:2.5, maxLevel:5,  desc:'×3 к потоку клиентов' },
+  { id:'codex', cat:'research', name:'База неисправностей',  icon:'📚', cost:5000,      costMult:1.6, maxLevel:5,  desc:'+1 к открываемым неисправностям' },
+  { id:'ai2',   cat:'research', name:'Нейросеть-диагност',   icon:'🤖', cost:60000,     costMult:1.8, maxLevel:5,  desc:'+10% шанс правильного диагноза' },
+  { id:'auto',  cat:'research', name:'Автоматизация ремонта',icon:'⚙️', cost:800000,    costMult:1.9, maxLevel:5,  desc:'+20% к доходу от персонала' },
+  { id:'syn',   cat:'research', name:'Синтез запчастей',     icon:'🧪', cost:1e7,       costMult:2.0, maxLevel:5,  desc:'+2 запчасти за заказ' },
+  { id:'mat',   cat:'research', name:'Новые материалы',      icon:'💎', cost:4e8,       costMult:2.1, maxLevel:5,  desc:'+30% к цене заказов' },
+  { id:'time',  cat:'research', name:'Оптимизация времени',  icon:'⏱️', cost:2e10,      costMult:2.3, maxLevel:5,  desc:'+50% к скорости работы' },
+  { id:'dim',   cat:'research', name:'Межмерное хранилище',  icon:'🌀', cost:2.5e12,    costMult:2.5, maxLevel:5,  desc:'×2 к оффлайн-доходу' },
+];
+const CATEGORIES = {
+  tools:     { name:'Инструменты',  icon:'🛠️' },
+  facility:  { name:'Помещение',    icon:'🏢' },
+  marketing: { name:'Маркетинг',    icon:'📢' },
+  research:  { name:'Исследования', icon:'🧪' },
+};
+
+const PRESTIGE_UPGRADES = [
+  { id:'p_money',  name:'Стартовый капитал',   icon:'💰', cost:1,  maxLevel:20, desc:'+100% к стартовым деньгам' },
+  { id:'p_income', name:'Опыт мастерской',     icon:'📈', cost:2,  maxLevel:20, desc:'+25% к общему доходу' },
+  { id:'p_rep',    name:'Репутация бренда',    icon:'⭐', cost:3,  maxLevel:20, desc:'+20% к репутации' },
+  { id:'p_parts',  name:'Запас запчастей',     icon:'🔧', cost:3,  maxLevel:10, desc:'+2 запчасти за заказ' },
+  { id:'p_order',  name:'Поток клиентов',      icon:'🚀', cost:5,  maxLevel:10, desc:'+50% к потоку заказов' },
+  { id:'p_rare',   name:'Редкие находки',      icon:'💎', cost:8,  maxLevel:10, desc:'+5% шанс редкой неисправности' },
+  { id:'p_auto',   name:'Автобарахолка',       icon:'🤖', cost:10, maxLevel:10, desc:'+1 авто-заказ в час' },
+  { id:'p_speed',  name:'Скорость реакции',    icon:'⚡', cost:12, maxLevel:10, desc:'-5% времени ремонта' },
+  { id:'p_codex',  name:'Секретные знания',    icon:'📚', cost:15, maxLevel:5,  desc:'Открывает премиум-неисправности' },
+  { id:'p_off',    name:'Круглосуточная смена',icon:'🌙', cost:20, maxLevel:5,  desc:'+1 час к оффлайну' },
+  { id:'p_pre',    name:'Наследие',            icon:'🏆', cost:50, maxLevel:10, desc:'+10% к получаемым 💎' },
+];
+
+const RARITY_COEF = { common:1, uncommon:2.5, rare:6, epic:15, legendary:40 };
+const RARITY_LABEL = { common:'Обычная', uncommon:'Необычная', rare:'Редкая', epic:'Эпическая', legendary:'Легендарная' };
+
+const FAULTS = {
+  psu_dead:{name:'Сгоревший БП',icon:'🔌',rarity:'common',part:'Блок питания',
+    symptoms:['не включается','тишина при нажатии'],causes:'Скачок напряжения или износ.',
+    tests:{visual:'Внешне чист, следов гари нет.',mult:'На выходе 0 В, дежурка отсутствует.'},
+    fix:['Отключить питание','Заменить блок питания','Проверить запуск']},
+  cable:{name:'Повреждённый кабель',icon:'⚡',rarity:'common',part:'Кабель питания',
+    symptoms:['не включается','индикатор не горит'],causes:'Перегиб или обрыв жилы.',
+    tests:{visual:'У разъёма заметен перегиб.',mult:'Кабель не звонится.'},
+    fix:['Отключить питание','Заменить кабель','Проверить запуск']},
+  btn:{name:'Кнопка питания',icon:'🔘',rarity:'common',part:'Кнопка питания',
+    symptoms:['не включается','БП исправен'],causes:'Износ или плохой контакт.',
+    tests:{visual:'Разъём кнопки подключён неплотно.',mult:'5 В есть, кнопка не замыкает.'},
+    fix:['Отключить питание','Проверить контакт','Проверить запуск']},
+  dust:{name:'Пыль в кулере',icon:'🌀',rarity:'common',part:'Кулер',
+    symptoms:['шумит','горячий корпус'],causes:'Пыль на лопастях.',
+    tests:{visual:'Радиатор забит пылью.',mult:'Питание в норме.'},
+    fix:['Отключить питание','Очистить пыль','Проверить запуск']},
+  overheat:{name:'Высохшая термопаста',icon:'🌡️',rarity:'uncommon',part:'Термоинтерфейс',
+    symptoms:['выключается в нагрузке','шумит'],causes:'Паста потеряла свойства.',
+    tests:{visual:'Следы засохшей пасты.',mult:'Температура 96°C за 5 минут.'},
+    fix:['Отключить питание','Снять кулер','Заменить термопасту','Установить кулер','Проверить нагрузкой']},
+  ram:{name:'Битый модуль ОЗУ',icon:'🧠',rarity:'uncommon',part:'ОЗУ',
+    symptoms:['синий экран','перезагрузки'],causes:'Деградация чипа памяти.',
+    tests:{visual:'Модуль повреждён визуально.',mult:'MemTest: ошибки при обращении.'},
+    fix:['Отключить питание','Проверить модули по одному','Заменить битый','Проверить систему']},
+  disk:{name:'Изношенный HDD',icon:'💾',rarity:'uncommon',part:'Жёсткий диск',
+    symptoms:['тормозит','файлы не открываются'],causes:'Сыпется поверхность.',
+    tests:{visual:'Посторонний шум при работе.',mult:'SMART: 240 переназначенных секторов.'},
+    fix:['Сохранить данные','Проверить SMART','Заменить диск','Проверить систему']},
+  psu_load:{name:'Просадка БП',icon:'⚙️',rarity:'uncommon',part:'Блок питания',
+    symptoms:['вылетает в игре','перезагрузки'],causes:'Мощности не хватает.',
+    tests:{visual:'Кабели подключены.',mult:'12В падает до 10.8В.'},
+    fix:['Отключить питание','Проверить кабели GPU','Заменить БП','Тест нагрузкой']},
+  caps:{name:'Вздутые конденсаторы',icon:'💥',rarity:'rare',part:'Материнская плата',
+    symptoms:['не включается','нестабильно'],causes:'Электролит вышел из строя.',
+    tests:{visual:'Конденсаторы с вздутой крышкой.',mult:'Пульсация питания +5В.'},
+    fix:['Отключить питание','Найти вздутые','Перепаять конденсаторы','Проверить запуск']},
+  bios:{name:'Сбитая прошивка BIOS',icon:'📟',rarity:'rare',part:'BIOS',
+    symptoms:['не грузится','чёрный экран'],causes:'Незавершённое обновление.',
+    tests:{visual:'Кулер вращается, экран чёрный.',mult:'POST не проходит.'},
+    fix:['Отключить питание','Взять программатор','Прошить BIOS','Проверить запуск']},
+  vrm:{name:'Повреждённые VRM',icon:'⚡',rarity:'rare',part:'Цепи питания CPU',
+    symptoms:['не стартует','треск при включении'],causes:'КЗ или выгорание.',
+    tests:{visual:'Следы нагрева на фазах.',mult:'Питание CPU не выходит.'},
+    fix:['Отключить питание','Найти пробитую фазу','Заменить VRM','Проверить нагрузкой']},
+  ssd_ctrl:{name:'Смерть контроллера SSD',icon:'🔲',rarity:'rare',part:'Контроллер SSD',
+    symptoms:['диск не определяется','зависает при загрузке'],causes:'Износ контроллера.',
+    tests:{visual:'Диск не определяется в BIOS.',mult:'Диск не отвечает на запросы.'},
+    fix:['Отключить питание','Проверить подключение','Перепаять контроллер','Восстановить данные']},
+  bga:{name:'Отвал чипа BGA',icon:'🎛️',rarity:'epic',part:'Видеочип или мост',
+    symptoms:['артефакты','чёрный экран'],causes:'Микротрещины в шариках припоя.',
+    tests:{visual:'Прогрев чипа меняет поведение.',mult:'Ошибки в цепях видеопамяти.'},
+    fix:['Отключить питание','Подготовить BGA-станцию','Снять чип','Накатать шарики','Установить чип','Проверить нагрузкой']},
+  trace:{name:'Разрыв дорожек',icon:'🕸️',rarity:'epic',part:'Печатная плата',
+    symptoms:['нет питания на узле','нестабильно'],causes:'Механическое повреждение.',
+    tests:{visual:'Микроскоп показывает разрыв.',mult:'КЗ или обрыв на линии.'},
+    fix:['Отключить питание','Найти разрыв','Пропаять дорожку','Защитить лаком','Проверить систему']},
+  liquid:{name:'Залитая плата',icon:'💧',rarity:'epic',part:'Материнская плата',
+    symptoms:['не включается после залития','коррозия'],causes:'Жидкость вызвала КЗ.',
+    tests:{visual:'Следы коррозии на элементах.',mult:'КЗ по шине питания.'},
+    fix:['Отключить питание','Разобрать плату','Ультразвуковая очистка','Просушить','Заменить повреждённые элементы','Проверить запуск']},
+  cpu_die:{name:'Умирающий CPU',icon:'🧊',rarity:'legendary',part:'Процессор',
+    symptoms:['ребуты в стресс-тесте','синие экраны'],causes:'Деградация кристалла.',
+    tests:{visual:'Следов износа нет.',mult:'Ошибки в стресс-тесте при 80°C.'},
+    fix:['Отключить питание','Тест стабильности','Заменить процессор','Обновить BIOS','Проверить нагрузкой']},
+  gpu_die:{name:'Умирающий видеочип',icon:'🎮',rarity:'legendary',part:'Видеокарта',
+    symptoms:['артефакты','рандомные падения драйвера'],causes:'Деградация GPU.',
+    tests:{visual:'Артефакты в 3DMark.',mult:'Ошибки в VRAM, температура чипа растёт.'},
+    fix:['Отключить питание','Тест VRAM','Перепайка памяти','Замена GPU','Тест нагрузкой']},
+  legend:{name:'Легендарный ремонт',icon:'🏆',rarity:'legendary',part:'Комплексная диагностика',
+    symptoms:['всё сломалось сразу'],causes:'Многофакторный случай.',
+    tests:{visual:'Следы стресса во многих узлах.',mult:'Все тесты показывают проблемы.'},
+    fix:['Полная разборка','Диагностика узлов','Ремонт каждого','Сборка','Длительный стресс-тест']},
+};
+
+const CLIENTS = [
+  { id:'artem',  name:'Артём',         role:'студент',      icon:'🧑‍🎓', line:'«Курсовая горит, спасайте!»' },
+  { id:'vera',   name:'Вера',          role:'библиотекарь', icon:'👩‍🏫', line:'«Книги в безопасности, а вот ноутбук…»' },
+  { id:'gena',   name:'Геннадий',      role:'сосед',        icon:'🧔',   line:'«Я всё сам починил. Стало хуже»' },
+  { id:'marina', name:'Марина',        role:'бухгалтер',    icon:'👩‍💼', line:'«Считаю копейки. И вам советую»' },
+  { id:'dima',   name:'Дима',          role:'геймер',       icon:'🎮',   line:'«Не могу играть — это невыносимо!»' },
+  { id:'olga',   name:'Ольга Петровна',role:'учительница',  icon:'👩‍🏫', line:'«Ученики сказали — комп гудит»' },
+  { id:'maxim',  name:'Максим',        role:'директор клуба',icon:'👔',  line:'«У меня 5 компов и все разные!»' },
+  { id:'igor',   name:'Игорь',         role:'конкурент',    icon:'🕴️',  line:'«Я слышал, у вас тут грамотно чинят?»' },
+  { id:'sergey', name:'Сергей',        role:'программист',  icon:'🧑‍💻', line:'«Перезагружается. Я уже всё проверил»' },
+  { id:'anya',   name:'Аня',           role:'дизайнер',     icon:'🎨',   line:'«Синий экран. Клиенты в шоке»' },
+  { id:'viktor', name:'Виктор',        role:'предприниматель',icon:'💼', line:'«У меня планёрка через час!»' },
+  { id:'gala',   name:'Галина',        role:'бабушка',      icon:'👵',   line:'«Внуки сказали — сам сломается»' },
+];
+
+const ALBUMS = [
+  { id:'starter',  name:'Первые клиенты',    icon:'📗', rewards:'+10% к доходу',  bonus:0.10, faults:['psu_dead','cable','btn','dust'] },
+  { id:'upgrade',  name:'Апгрейд-мастера',  icon:'📘', rewards:'+15% к репутации', bonus:0.15, faults:['overheat','ram','disk','psu_load'] },
+  { id:'chip',     name:'Чип-мастера',      icon:'📙', rewards:'+20% к доходу',  bonus:0.20, faults:['caps','bios','vrm','ssd_ctrl'] },
+  { id:'bga',      name:'BGA-виртуозы',     icon:'📕', rewards:'+25% к репутации', bonus:0.25, faults:['bga','trace','liquid'] },
+  { id:'legend',   name:'Легендарные дела', icon:'📓', rewards:'+50% к доходу',  bonus:0.50, faults:['cpu_die','gpu_die'] },
+  { id:'perfect',  name:'Идеальный сервис', icon:'📔', rewards:'+100% к доходу', bonus:1.00, faults:['legend'] },
+];
+
+const ACHIEVEMENTS = [
+  { id:'first_order', icon:'🎯', name:'Первый заказ',       desc:'Выполни первый заказ',           cond:s=>s.totalOrders>=1 },
+  { id:'orders_10',   icon:'🔧', name:'Начинающий мастер',  desc:'Выполни 10 заказов',              cond:s=>s.totalOrders>=10 },
+  { id:'orders_100',  icon:'🔨', name:'Опытный техник',     desc:'Выполни 100 заказов',             cond:s=>s.totalOrders>=100 },
+  { id:'orders_1k',   icon:'🏆', name:'Мастер своего дела', desc:'Выполни 1000 заказов',            cond:s=>s.totalOrders>=1000 },
+  { id:'orders_10k',  icon:'👑', name:'Легенда района',     desc:'Выполни 10000 заказов',           cond:s=>s.totalOrders>=10000 },
+  { id:'money_1k',    icon:'💰', name:'Первая тысяча',      desc:'Заработай 1K ₽',                  cond:s=>s.totalMoney.gte(1e3) },
+  { id:'money_1m',    icon:'💵', name:'Миллион!',           desc:'Заработай 1M ₽',                  cond:s=>s.totalMoney.gte(1e6) },
+  { id:'money_1b',    icon:'💎', name:'Миллиардер',         desc:'Заработай 1B ₽',                  cond:s=>s.totalMoney.gte(1e9) },
+  { id:'money_1t',    icon:'💠', name:'Триллион',           desc:'Заработай 1T ₽',                  cond:s=>s.totalMoney.gte(1e12) },
+  { id:'money_1q',    icon:'🌌', name:'Квадриллион',        desc:'Заработай 1Qa ₽',                 cond:s=>s.totalMoney.gte(1e15) },
+  { id:'first_staff', icon:'👥', name:'Первый наёмный',     desc:'Найм первого сотрудника',         cond:s=>Object.values(s.staff).some(c=>c>=1) },
+  { id:'staff_100',   icon:'🏢', name:'Штат',               desc:'100 сотрудников суммарно',        cond:s=>Object.values(s.staff).reduce((a,b)=>a+b,0)>=100 },
+  { id:'first_upg',   icon:'🛠️', name:'Инвестиции',         desc:'Купи первое улучшение',           cond:s=>Object.values(s.upgrades).some(l=>l>=1) },
+  { id:'codex_5',     icon:'📚', name:'Первые знания',      desc:'Открой 5 неисправностей',         cond:s=>Object.keys(s.codex).length>=5 },
+  { id:'codex_15',    icon:'📖', name:'Энциклопедия',       desc:'Открой 15 неисправностей',        cond:s=>Object.keys(s.codex).length>=15 },
+  { id:'codex_all',   icon:'🧠', name:'Всезнающий',         desc:'Открой все неисправности',        cond:s=>Object.keys(s.codex).length>=Object.keys(FAULTS).length },
+  { id:'prestige_1',  icon:'💎', name:'Филиал №2',          desc:'Сделай первый престиж',           cond:s=>s.totalPrestiges>=1 },
+  { id:'prestige_10', icon:'💠', name:'Франшиза',           desc:'10 престижей',                    cond:s=>s.totalPrestiges>=10 },
+  { id:'prestige_100',icon:'🌌', name:'Империя',            desc:'100 престижей',                   cond:s=>s.totalPrestiges>=100 },
+  { id:'rep_100',     icon:'⭐', name:'Уважаемый',          desc:'100 репутации',                   cond:s=>s.totalRepEarned.gte(100) },
+  { id:'rep_10k',     icon:'🌟', name:'Звезда города',      desc:'10K репутации',                   cond:s=>s.totalRepEarned.gte(10000) },
+  { id:'parts_1k',    icon:'🔩', name:'Кладовщик',          desc:'Накопи 1000 запчастей',           cond:s=>s.spareParts.gte(1000) },
+  { id:'income_1k',   icon:'📈', name:'Стабильность',       desc:'Доход 1K ₽/сек',                  cond:s=>s._incomeCache>=1000 },
+  { id:'income_1m',   icon:'🚀', name:'Ракета',             desc:'Доход 1M ₽/сек',                  cond:s=>s._incomeCache>=1e6 },
+  { id:'income_1b',   icon:'🛸', name:'Гиперпрыжок',        desc:'Доход 1B ₽/сек',                  cond:s=>s._incomeCache>=1e9 },
+  { id:'income_1t',   icon:'⚡', name:'Скорость света',     desc:'Доход 1T ₽/сек',                  cond:s=>s._incomeCache>=1e12 },
+  { id:'stage_2',     icon:'🚪', name:'Новое помещение',    desc:'Достигни 2 этапа',                 cond:s=>s.stage>=2 },
+  { id:'stage_4',     icon:'🏢', name:'Серьёзный бизнес',   desc:'Достигни 4 этапа',                 cond:s=>s.stage>=4 },
+  { id:'stage_6',     icon:'🏰', name:'Империя',            desc:'Достигни 6 этапа',                 cond:s=>s.stage>=6 },
+  { id:'ach_10',      icon:'🥉', name:'Коллекционер',       desc:'Открой 10 достижений',            cond:s=>Object.keys(s.achievements).length>=10 },
+  { id:'ach_20',      icon:'🥈', name:'Перфекционист',      desc:'Открой 20 достижений',            cond:s=>Object.keys(s.achievements).length>=20 },
+  { id:'ach_30',      icon:'🥇', name:'Завершённость',      desc:'Открой 30 достижений',            cond:s=>Object.keys(s.achievements).length>=30 },
+  { id:'event_5',     icon:'🎲', name:'Свидетель',          desc:'Переживи 5 событий',              cond:s=>s.eventsSeen>=5 },
+  { id:'offline_1h',  icon:'🌙', name:'Ночная смена',       desc:'Получи оффлайн-доход',            cond:s=>s.offlineEarningsTotal.gte(1) },
+  { id:'crit',        icon:'🎯', name:'Снайпер',            desc:'10 диагнозов с 1-й попытки',      cond:s=>s.perfectDiagnoses>=10 },
+  { id:'crit_100',    icon:'🎖️', name:'Ясновидец',         desc:'100 диагнозов с 1-й попытки',     cond:s=>s.perfectDiagnoses>=100 },
+  { id:'fast',        icon:'⏱️', name:'Быстрая рука',       desc:'Ремонт без ошибок',               cond:s=>s.perfectRepairs>=1 },
+  { id:'fast_50',     icon:'💨', name:'Автоматизм',         desc:'50 ремонтов без ошибок',          cond:s=>s.perfectRepairs>=50 },
+  { id:'parts_100k',  icon:'🏭', name:'Склад',              desc:'100K запчастей',                  cond:s=>s.spareParts.gte(100000) },
+  { id:'album_first', icon:'📗', name:'Первый альбом',      desc:'Собери первый альбом',            cond:s=>Object.values(s.albums).some(a=>a && a.complete) },
+  { id:'album_all',   icon:'📚', name:'Полная коллекция',   desc:'Собери все альбомы',              cond:s=>ALBUMS.every(a=>s.albums[a.id] && s.albums[a.id].complete) },
+  { id:'daily_7',     icon:'📅', name:'Неделя в строю',     desc:'7 дней подряд заходи в игру',      cond:s=>s.dailyStreak>=7 },
+  { id:'daily_30',    icon:'🗓️', name:'Месяц в строю',      desc:'30 дней подряд',                  cond:s=>s.dailyStreak>=30 },
+  { id:'buy_100',     icon:'🛒', name:'Оптовик',            desc:'100 покупок всего',               cond:s=>s.totalPurchases>=100 },
+  { id:'buy_1000',    icon:'📦', name:'Снабженец',          desc:'1000 покупок всего',              cond:s=>s.totalPurchases>=1000 },
+  { id:'music_on',    icon:'🎵', name:'С музыкой веселей',  desc:'Включи фоновую музыку',           cond:s=>s._musicUsed===true },
+];
+
+const EVENTS = [
+  { id:'bonus_x2',  name:'Горячая пора',      desc:'Доход ×2 на 60 сек',           icon:'🔥', duration:60,  apply:s=>{s.eventBonus=2;}, clean:s=>{s.eventBonus=1;} },
+  { id:'sale',      name:'Распродажа',         desc:'-30% к цене апгрейдов 90 сек', icon:'🏷️', duration:90,  apply:s=>{s.eventDiscount=0.7;}, clean:s=>{s.eventDiscount=1;} },
+  { id:'viral',     name:'Виральный отзыв',    desc:'+50% к заказам 2 мин',         icon:'📢', duration:120, apply:s=>{s.eventOrderBoost=1.5;}, clean:s=>{s.eventOrderBoost=1;} },
+  { id:'crash',     name:'ЧП в мастерской',    desc:'-20% дохода 45 сек',           icon:'⚠️', duration:45,  apply:s=>{s.eventPenalty=0.8;}, clean:s=>{s.eventPenalty=1;} },
+  { id:'lucky',     name:'Удачная находка',    desc:'+500 запчастей',               icon:'💎', duration:0,   apply:s=>{s.spareParts = s.spareParts.add(500);}, clean:null },
+  { id:'inspection',name:'Проверка СЭС',       desc:'+5 репутации',                 icon:'📋', duration:0,   apply:s=>{s.reputation = s.reputation.add(5); s.totalRepEarned = s.totalRepEarned.add(5);}, clean:null },
+];
+
+const STAGES = [
+  { id:1, name:'Гараж на окраине',    desc:'Старт одиночки',         unlockMoney:0 },
+  { id:2, name:'Мастерская «Резистор»',desc:'Первые клиенты',        unlockMoney:25000 },
+  { id:3, name:'По рекомендации',      desc:'Слава пошла',           unlockMoney:2.5e6 },
+  { id:4, name:'Профессиональный сервис',desc:'Юрлица, B2B',         unlockMoney:2.5e8 },
+  { id:5, name:'Известная мастерская', desc:'Мастера города',        unlockMoney:2.5e10 },
+  { id:6, name:'Мастерская мечты',     desc:'Империя',               unlockMoney:2.5e12 },
+];
+
+const DAILY_REWARDS = [
+  { icon:'💰', money: 500,   parts: 5,  rep: 1 },
+  { icon:'⭐', money: 1000,  parts: 10, rep: 2 },
+  { icon:'🔧', money: 2500,  parts: 25, rep: 3 },
+  { icon:'💎', money: 5000,  parts: 50, rep: 5 },
+  { icon:'🎁', money: 15000, parts: 100,rep: 10 },
+  { icon:'🏆', money: 50000, parts: 250,rep: 25 },
+  { icon:'👑', money: 250000,parts: 1000,rep: 100 },
+];
+
+/* ============================================================
+   СОСТОЯНИЕ
+   ============================================================ */
+const SAVE_KEY = 'rezistor_idle_v6';
+const SAVE_SLOT_KEY = id => SAVE_KEY + '_slot_' + id;
+const LEGACY_KEYS = ['rezistor_idle_v5_slot_', 'rezistor_idle_v4_slot_'];
+
+function defaultState(){
+  return {
+    v: 6,
+    money: dec(25),
+    reputation: dec(0), spareParts: dec(0), xp: dec(0),
+    totalMoney: dec(25), totalRepEarned: dec(0), offlineEarningsTotal: dec(0),
+    totalOrders: 0, totalFaultsFixed: 0, perfectDiagnoses: 0, perfectRepairs: 0,
+    eventsSeen: 0, totalPurchases: 0,
+    staff: {}, upgrades: {}, codex: {}, achievements: {}, prestigeUpgrades: {}, albums: {},
+    _seenUpgrades: {},
+    stage: 1,
+    currentOrder: null, diagnosis: null, repair: null,
+    lastTick: Date.now(), lastSave: Date.now(), startedAt: Date.now(),
+    playTime: 0, totalPrestiges: 0,
+    activeEvent: null,
+    dailyDate: null, dailyStreak: 0, dailyClaimed: false,
+    settings: {
+      notation: 'short',
+      autosave: true,
+      sound: true,
+      volume: 0.5,
+      animations: true,
+      music: false,
+      musicVolume: 0.22,
+    },
+    _incomeCache: 0,
+    eventBonus: 1, eventDiscount: 1, eventOrderBoost: 1, eventPenalty: 1,
+    _musicUsed: false,
+    _firstRun: true, _slot: 1,
+  };
+}
+
+let state = null;
+let activeTab = 'workshop';
+let activeCatTab = 'tools';
+let lastUITick = 0;
+let rafId = null;
+let lastFrameTime = performance.now();
+let reducedMotion = false;
+
+/* ============================================================
+   СЕРИАЛИЗАЦИЯ
+   ============================================================ */
+function serializeState(s){
+  const plain = JSON.parse(JSON.stringify(s, (k, v) => {
+    if (v instanceof Decimal) return { __dec: true, m: v.m, e: v.e };
+    return v;
+  }));
+  delete plain._incomeCache;
+  delete plain._firstRun;
+  return plain;
+}
+function deserializeState(obj){
+  return JSON.parse(JSON.stringify(obj), (k, v) => {
+    if (v && typeof v === 'object' && v.__dec === true) return new Decimal(v.m, v.e);
+    return v;
+  });
+}
+function saveNow(){
+  try{
+    state.lastSave = now();
+    localStorage.setItem(SAVE_SLOT_KEY(state._slot), JSON.stringify(serializeState(state)));
+  } catch(e){ console.warn('Save error:', e); }
+}
+function loadGame(slot){
+  slot = slot || 1;
+  try{
+    let raw = localStorage.getItem(SAVE_SLOT_KEY(slot));
+    if (!raw){
+      for (const k of LEGACY_KEYS){
+        raw = localStorage.getItem(k + slot);
+        if (raw) break;
+      }
+    }
+    if (!raw) return null;
+    const restored = deserializeState(JSON.parse(raw));
+    const merged = Object.assign(defaultState(), restored);
+    ['money','reputation','spareParts','xp','totalMoney','totalRepEarned','offlineEarningsTotal'].forEach(k => {
+      if (!(merged[k] instanceof Decimal)) merged[k] = dec(merged[k] || 0);
+    });
+    if (!merged.staff) merged.staff = {};
+    if (!merged.upgrades) merged.upgrades = {};
+    if (!merged.codex) merged.codex = {};
+    if (!merged.achievements) merged.achievements = {};
+    if (!merged.prestigeUpgrades) merged.prestigeUpgrades = {};
+    if (!merged.albums) merged.albums = {};
+    if (!merged._seenUpgrades) merged._seenUpgrades = {};
+    if (!merged.settings) merged.settings = {};
+    if (merged.settings.sound === undefined) merged.settings.sound = true;
+    if (merged.settings.volume === undefined) merged.settings.volume = 0.5;
+    if (merged.settings.animations === undefined) merged.settings.animations = true;
+    if (merged.settings.music === undefined) merged.settings.music = false;
+    if (merged.settings.musicVolume === undefined) merged.settings.musicVolume = 0.22;
+    // МИГРАЦИЯ: стартовые 25 ₽
+    if ((merged.totalOrders || 0) === 0 && merged.money.lt(25)){
+      merged.money = dec(25);
+      if (merged.totalMoney.lt(25)) merged.totalMoney = dec(25);
+    }
+    merged._slot = slot;
+    merged._firstRun = false;
+    return merged;
+  } catch(e){ console.warn('Load error:', e); return null; }
+}
+function deleteSave(slot){
+  localStorage.removeItem(SAVE_SLOT_KEY(slot));
+  for (const k of LEGACY_KEYS) localStorage.removeItem(k + slot);
+}
+window.addEventListener('beforeunload', saveNow);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
+
+/* ============================================================
+   ЭКОНОМИКА
+   ============================================================ */
+function getUpgradeLevel(id){ return state.upgrades[id] || 0; }
+function isUpgradeMaxed(u){ return getUpgradeLevel(u.id) >= u.maxLevel; }
+function upgradeCost(u){
+  const lvl = getUpgradeLevel(u.id);
+  return dec(u.cost).mul(dec(u.costMult).pow(lvl)).mul(state.eventDiscount || 1);
+}
+function staffCost(st){
+  const owned = state.staff[st.id] || 0;
+  return dec(st.baseCost).mul(dec(STAFF_COST_MULT).pow(owned)).mul(state.eventDiscount || 1);
+}
+function staffIncome(st){
+  const owned = state.staff[st.id] || 0;
+  if (!owned) return dec(0);
+  return dec(st.baseIncome).mul(owned);
+}
+function toolMultiplier(){
+  let m = dec(1);
+  m = m.mul(dec(1).add(getUpgradeLevel('scr')*0.08));
+  m = m.mul(dec(1).add(getUpgradeLevel('multi')*0.10));
+  m = m.mul(dec(1).add(getUpgradeLevel('solder')*0.15));
+  m = m.mul(dec(1).add(getUpgradeLevel('scope')*0.20));
+  m = m.mul(dec(1).add(getUpgradeLevel('ir')*0.25));
+  m = m.mul(dec(1).add(getUpgradeLevel('micro')*0.30));
+  m = m.mul(dec(1).add(getUpgradeLevel('bga')*0.40));
+  m = m.mul(dec(1).add(getUpgradeLevel('nano')*0.60));
+  return m;
+}
+function facilityMultiplier(){
+  let m = dec(1);
+  m = m.mul(dec(1).add(getUpgradeLevel('bench')*0.05));
+  m = m.mul(dec(1).add(getUpgradeLevel('room')*0.10));
+  m = m.mul(dec(1).add(getUpgradeLevel('vent')*0.08));
+  m = m.mul(dec(1).add(getUpgradeLevel('clean')*0.20));
+  m = m.mul(dec(1).add(getUpgradeLevel('bunker')*0.50));
+  return m;
+}
+function marketingMultiplier(){
+  let m = dec(1);
+  m = m.mul(dec(1).add(getUpgradeLevel('billb')*0.50));
+  m = m.mul(dec(1).add(getUpgradeLevel('tv')*1.00));
+  m = m.mul(dec(1).add(getUpgradeLevel('global')*2.00));
+  return m;
+}
+function researchMultiplier(){
+  let m = dec(1);
+  m = m.mul(dec(1).add(getUpgradeLevel('auto')*0.20));
+  m = m.mul(dec(1).add(getUpgradeLevel('time')*0.50));
+  return m;
+}
+function prestigeIncomeMultiplier(){ return dec(1).add((state.prestigeUpgrades.p_income || 0) * 0.25); }
+function prestigeOrderMultiplier(){ return dec(1).add((state.prestigeUpgrades.p_order || 0) * 0.50); }
+function codexBonus(){ return dec(1).add(Object.keys(state.codex).length * 0.02); }
+function albumBonus(){
+  let sum = 0;
+  for (const album of ALBUMS){
+    if (state.albums[album.id] && state.albums[album.id].complete) sum += album.bonus;
+  }
+  return dec(1).add(sum);
+}
+function totalIncome(){
+  const staffSum = STAFF.reduce((sum, st) => sum.add(staffIncome(st)), dec(0));
+  return staffSum
+    .mul(toolMultiplier())
+    .mul(facilityMultiplier())
+    .mul(researchMultiplier())
+    .mul(prestigeIncomeMultiplier())
+    .mul(codexBonus())
+    .mul(albumBonus())
+    .mul(state.eventBonus || 1)
+    .mul(state.eventPenalty || 1);
+}
+function orderFrequencyPerHour(){
+  let base = dec(6);
+  base = base.add(getUpgradeLevel('flyer') * 1);
+  base = base.add(getUpgradeLevel('site') * 2);
+  base = base.add(getUpgradeLevel('ads') * 5);
+  base = base.mul(marketingMultiplier()).mul(prestigeOrderMultiplier()).mul(state.eventOrderBoost || 1);
+  return base;
+}
+
+/* ============================================================
+   ПРЕСТИЖ
+   ============================================================ */
+function prestigeXPGain(){
+  const mult = 1 + (state.prestigeUpgrades.p_pre || 0) * 0.10;
+  const total = state.totalMoney.toNumber();
+  if (!Number.isFinite(total) || total <= 1e6) return 0;
+  const base = total / 1e6;
+  const raw = Math.floor(Math.pow(base, 0.4));
+  const result = Math.floor(raw * mult);
+  return Number.isFinite(result) && result > 0 ? result : 0;
+}
+function doPrestige(){
+  const gain = prestigeXPGain();
+  if (gain < 1){ toast('Слишком мало дохода для престижа', 'event'); return; }
+  const fresh = defaultState();
+  fresh.xp = state.xp.add(gain);
+  fresh.totalMoney = state.totalMoney;
+  fresh.totalOrders = state.totalOrders;
+  fresh.totalFaultsFixed = state.totalFaultsFixed;
+  fresh.totalRepEarned = state.totalRepEarned;
+  fresh.totalPrestiges = state.totalPrestiges + 1;
+  fresh.perfectDiagnoses = state.perfectDiagnoses;
+  fresh.perfectRepairs = state.perfectRepairs;
+  fresh.eventsSeen = state.eventsSeen;
+  fresh.offlineEarningsTotal = state.offlineEarningsTotal;
+  fresh.totalPurchases = state.totalPurchases;
+  fresh.achievements = state.achievements;
+  fresh.codex = state.codex;
+  fresh.albums = state.albums;
+  fresh.prestigeUpgrades = state.prestigeUpgrades;
+  fresh._seenUpgrades = state._seenUpgrades;
+  fresh.startedAt = state.startedAt;
+  fresh.playTime = state.playTime;
+  fresh.settings = state.settings;
+  fresh.dailyDate = state.dailyDate;
+  fresh.dailyStreak = state.dailyStreak;
+  fresh.dailyClaimed = state.dailyClaimed;
+  fresh._slot = state._slot;
+  fresh._firstRun = false;
+  fresh._musicUsed = state._musicUsed;
+  fresh.money = dec(1000).mul(dec(2).pow(state.prestigeUpgrades.p_money || 0));
+  state = fresh;
+  saveNow();
+  SoundManager.play('prestige');
+  toast(`🏆 Филиал открыт! Получено 💎${gain}`, 'ach');
+  render();
+}
+function buyPrestigeUpgrade(id){
+  const u = PRESTIGE_UPGRADES.find(x=>x.id===id);
+  if (!u) return;
+  const lvl = state.prestigeUpgrades[id] || 0;
+  if (lvl >= u.maxLevel) return;
+  const cost = u.cost * (lvl + 1);
+  if (state.xp.lt(cost)){ toast('Не хватает 💎', 'event'); SoundManager.play('error'); return; }
+  state.xp = state.xp.sub(cost);
+  state.prestigeUpgrades[id] = lvl + 1;
+  SoundManager.play('buy');
+  toast(`✓ ${u.name} → ур. ${lvl+1}`, 'ach');
+  saveNow();
+  render();
+}
+
+/* ============================================================
+   ИГРОВОЙ ЦИКЛ
+   ============================================================ */
+function gameTick(dt){
+  state.playTime += dt;
+  const inc = totalIncome();
+  state._incomeCache = inc.toNumber();
+  const earned = inc.mul(dt);
+  state.money = state.money.add(earned);
+  state.totalMoney = state.totalMoney.add(earned);
+  const stage = STAGES.find(s => state.money.gte(s.unlockMoney));
+  if (stage && stage.id > state.stage){
+    state.stage = stage.id;
+    SoundManager.play('success');
+    toast(`🎉 Новый этап: ${stage.name}`, 'ach');
+  }
+  if (state.activeEvent){
+    if (now() >= state.activeEvent.expiresAt){
+      const ev = EVENTS.find(e=>e.id === state.activeEvent.id);
+      if (ev && ev.clean) ev.clean(state);
+      state.activeEvent = null;
+    }
+  } else if (Math.random() < dt / 90){
+    triggerRandomEvent();
+  }
+  if (Math.random() < dt * 2){
+    checkAchievements();
+  }
+}
+function triggerRandomEvent(){
+  if (state.activeEvent) return;
+  const ev = choice(EVENTS);
+  state.eventsSeen = (state.eventsSeen || 0) + 1;
+  if (ev.duration > 0){
+    state.activeEvent = { id:ev.id, expiresAt: now() + ev.duration * 1000 };
+    if (ev.apply) ev.apply(state);
+    SoundManager.play('event');
+    toast(`${ev.icon} ${ev.name}: ${ev.desc}`, 'event');
+  } else {
+    if (ev.apply) ev.apply(state);
+    SoundManager.play('event');
+    toast(`${ev.icon} ${ev.name}: ${ev.desc}`, 'event');
+  }
+  saveNow();
+}
+function checkAchievements(){
+  for (const a of ACHIEVEMENTS){
+    if (state.achievements[a.id]) continue;
+    try {
+      if (a.cond(state)){
+        state.achievements[a.id] = true;
+        queueAchievementToast(a);
+        saveNow();
+      }
+    } catch(e){}
+  }
+}
+function queueAchievementToast(a){
+  SoundManager.play('achievement');
+  const el = document.createElement('div');
+  el.className = 'toast ach';
+  el.innerHTML = `<b>${a.icon} Достижение: ${a.name}</b><div class="small muted">${a.desc}</div>`;
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 5000);
+}
+
+/* ============================================================
+   ЕЖЕДНЕВКИ
+   ============================================================ */
+function checkDaily(){
+  const todayStr = today();
+  if (state.dailyDate === todayStr) return;
+  const y = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  if (state.dailyDate === y){
+    state.dailyStreak = Math.min(state.dailyStreak + 1, 7);
+  } else {
+    state.dailyStreak = 1;
+  }
+  state.dailyDate = todayStr;
+  state.dailyClaimed = false;
+  saveNow();
+}
+function claimDaily(){
+  if (state.dailyClaimed) return;
+  const idx = Math.min(state.dailyStreak - 1, DAILY_REWARDS.length - 1);
+  const r = DAILY_REWARDS[idx];
+  state.money = state.money.add(r.money);
+  state.totalMoney = state.totalMoney.add(r.money);
+  state.spareParts = state.spareParts.add(r.parts);
+  state.reputation = state.reputation.add(r.rep);
+  state.totalRepEarned = state.totalRepEarned.add(r.rep);
+  state.dailyClaimed = true;
+  saveNow();
+  SoundManager.play('daily');
+  toast(`🎁 День ${state.dailyStreak}: +${fmt(r.money)} ₽, +${r.parts} 🔧, +${r.rep} ⭐`, 'ach');
+  render();
+}
+
+/* ============================================================
+   ОФФЛАЙН-ПРОГРЕСС
+   ============================================================ */
+function processOffline(){
+  if (state._firstRun) return;
+  const elapsed = (now() - (state.lastSave || now())) / 1000;
+  if (elapsed < 60) return;
+  const maxHours = 8 + (state.prestigeUpgrades.p_off || 0);
+  const effective = Math.min(elapsed, maxHours * 3600);
+  const inc = totalIncome();
+  const earned = inc.mul(effective);
+  if (earned.lt(1)) return;
+  state.money = state.money.add(earned);
+  state.totalMoney = state.totalMoney.add(earned);
+  state.offlineEarningsTotal = state.offlineEarningsTotal.add(earned);
+  const h = Math.floor(effective / 3600);
+  const m = Math.floor((effective % 3600) / 60);
+  const wasCapped = elapsed > maxHours * 3600;
+  setTimeout(() => {
+    SoundManager.play('coin');
+    showModal(
+      '🌙 Пока вас не было',
+      `<p>Отсутствие: <b>${h}ч ${m}м</b>${wasCapped ? ` <span class="muted">(лимит оффлайн ${maxHours}ч)</span>` : ''}</p>
+       <p>Доход: <b class="good">+${fmt(earned)} ₽</b></p>
+       <p class="muted small">Источник: сотрудники (${fmt(inc)} ₽/сек)</p>`,
+      null,
+      false
+    );
+  }, 500);
+}
+
+/* ============================================================
+   ЗАКАЗЫ
+   ============================================================ */
+function pickRandomFault(){
+  const allowed = {
+    1: ['common'],
+    2: ['common','uncommon'],
+    3: ['common','uncommon','rare'],
+    4: ['common','uncommon','rare','epic'],
+    5: ['common','uncommon','rare','epic'],
+    6: ['common','uncommon','rare','epic','legendary'],
+  }[state.stage] || ['common'];
+  const pool = Object.entries(FAULTS).filter(([id,f]) => allowed.includes(f.rarity));
+  const weights = pool.map(([id,f]) => {
+    const base = { common:100, uncommon:40, rare:12, epic:3, legendary:0.6 }[f.rarity];
+    const rareBonus = 1 + (state.prestigeUpgrades.p_rare || 0) * 0.05;
+    return f.rarity === 'common' ? base : base * rareBonus;
+  });
+  const totalW = weights.reduce((a,b)=>a+b,0);
+  let r = Math.random() * totalW;
+  for (let i = 0; i < pool.length; i++){
+    r -= weights[i];
+    if (r <= 0) return pool[i][0];
+  }
+  return pool[0][0];
+}
+function createOrder(){
+  const faultId = pickRandomFault();
+  const fault = FAULTS[faultId];
+  const client = choice(CLIENTS);
+  const similar = Object.keys(FAULTS).filter(id => id !== faultId && FAULTS[id].rarity === fault.rarity);
+  const wrongs = similar.sort(() => Math.random() - 0.5).slice(0, Math.random() < 0.5 ? 1 : 2);
+  const candidates = [faultId, ...wrongs].sort(() => Math.random() - 0.5);
+  const rarityCoef = RARITY_COEF[fault.rarity] || 1;
+  const baseReward = dec(50).mul(rarityCoef).mul(dec(1.8).pow(state.stage - 1)).mul(dec(1).add(getUpgradeLevel('mat')*0.30));
+  return {
+    id: uid(),
+    clientId: client.id,
+    faultId,
+    candidates,
+    reward: baseReward,
+    rep: Math.ceil(5 * rarityCoef),
+    tests: ['visual'].concat(getUpgradeLevel('multi') >= 1 ? ['mult'] : []),
+    created: now(),
+  };
+}
+function takeOrder(){
+  if (state.currentOrder){ toast('Сначала завершите текущий заказ'); return; }
+  state.currentOrder = createOrder();
+  state.diagnosis = { tests:[], verdict:null, confirmed:false, firstTry:true };
+  state.repair = { placed:[], mistakes:0, shuffled:null };
+  saveNow();
+  SoundManager.play('click');
+  toast('📋 Новый заказ принят');
+  render();
+}
+function runTest(testId){
+  if (!state.currentOrder) return;
+  if (!state.diagnosis.tests.includes(testId)) state.diagnosis.tests.push(testId);
+  saveNow();
+  SoundManager.play('click');
+  render();
+}
+function selectVerdict(faultId){
+  if (!state.diagnosis) return;
+  if (state.diagnosis.confirmed) return;
+  state.diagnosis.verdict = faultId;
+  saveNow();
+  SoundManager.play('click');
+  render();
+}
+function confirmDiagnosis(){
+  if (!state.currentOrder || !state.diagnosis.verdict) return;
+  const correct = state.diagnosis.verdict === state.currentOrder.faultId;
+  if (!correct){
+    state.diagnosis.firstTry = false;
+    SoundManager.play('error');
+    toast('❌ Неверный диагноз. Попробуйте ещё раз', 'event');
+    state.diagnosis.verdict = null;
+    saveNow();
+    render();
+    return;
+  }
+  state.diagnosis.confirmed = true;
+  const fid = state.currentOrder.faultId;
+  if (!state.codex[fid]){
+    state.codex[fid] = { discoveredAt: now(), count: 0 };
+    SoundManager.play('codex');
+    toast(`📖 Открыта запись: ${FAULTS[fid].name}`, 'ach');
+    updateAlbums(fid);
+  } else {
+    SoundManager.play('success');
+  }
+  if (state.diagnosis.firstTry){
+    state.perfectDiagnoses = (state.perfectDiagnoses || 0) + 1;
+  }
+  saveNow();
+  render();
+}
+function updateAlbums(faultId){
+  for (const album of ALBUMS){
+    if (!album.faults.includes(faultId)) continue;
+    if (!state.albums[album.id]) state.albums[album.id] = { discovered: [], complete: false };
+    const a = state.albums[album.id];
+    if (!a.discovered.includes(faultId)) a.discovered.push(faultId);
+    if (!a.complete && album.faults.every(f => state.codex[f])){
+      a.complete = true;
+      SoundManager.play('achievement');
+      toast(`📚 Альбом собран: ${album.name}! ${album.rewards}`, 'ach');
+    }
+  }
+}
+function getRepairOptions(){
+  const fault = FAULTS[state.currentOrder.faultId];
+  const correct = fault.fix.map((text, i) => ({ text, index:i, correct:true }));
+  const wrongPool = [
+    'Сразу снять деталь, не отключая питание',
+    'Закрутить обратно, не проверив',
+    'Проверить запуск до сборки',
+    'Заменить деталь, не убедившись в причине',
+    'Сделать прогрев без защиты',
+  ];
+  const wrongs = wrongPool.slice(0, 3).map((text, i) => ({ text, index:'w'+i, correct:false }));
+  const all = [...correct, ...wrongs];
+  if (!state.repair.shuffled){
+    const copy = all.slice();
+    for (let i = copy.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = copy[i]; copy[i] = copy[j]; copy[j] = tmp;
+    }
+    state.repair.shuffled = copy.map(x => x.index);
+  }
+  const map = {};
+  all.forEach(x => { map[String(x.index)] = x; });
+  return state.repair.shuffled.map(k => map[String(k)]).filter(Boolean);
+}
+function doRepairAction(key){
+  if (!state.currentOrder || !state.diagnosis.confirmed) return;
+  const fault = FAULTS[state.currentOrder.faultId];
+  const expected = state.repair.placed.length;
+  const k = String(key).startsWith('w') ? key : Number(key);
+  if (k === expected){
+    state.repair.placed.push(expected);
+    saveNow();
+    SoundManager.play('repair_ok');
+    render();
+    if (state.repair.placed.length === fault.fix.length){
+      completeOrder();
+    }
+  } else {
+    state.repair.mistakes++;
+    SoundManager.play('repair_err');
+    toast('⚠ Неверный порядок. Подумайте о безопасности', 'event');
+    saveNow();
+    render();
+  }
+}
+function completeOrder(){
+  const order = state.currentOrder;
+  const reward = order.reward;
+  const rep = order.rep;
+  const partsGained = 2 + getUpgradeLevel('syn') * 2 + (state.prestigeUpgrades.p_parts || 0) * 2;
+  const perfect = state.repair.mistakes === 0;
+  const perfectBonus = perfect ? 1.2 : 1.0;
+
+  state.money = state.money.add(reward.mul(perfectBonus));
+  state.totalMoney = state.totalMoney.add(reward.mul(perfectBonus));
+  state.reputation = state.reputation.add(rep);
+  state.totalRepEarned = state.totalRepEarned.add(rep);
+  state.spareParts = state.spareParts.add(partsGained);
+  state.totalOrders++;
+  state.totalFaultsFixed = (state.totalFaultsFixed || 0) + 1;
+  if (perfect) state.perfectRepairs = (state.perfectRepairs || 0) + 1;
+  if (state.codex[order.faultId]){
+    state.codex[order.faultId].count++;
+  }
+  state.currentOrder = null;
+  state.diagnosis = null;
+  state.repair = null;
+  saveNow();
+
+  SoundManager.play('coin');
+  floatTextAtCursor(`+${fmt(reward.mul(perfectBonus))} ₽`, 'var(--green)', $('res-money'));
+  setTimeout(() => {
+    SoundManager.play('rep');
+    floatTextAtCursor(`+${rep} ⭐`, 'var(--gold)', $('res-rep'));
+  }, 150);
+
+  if (perfect) toast('✅ Идеальный ремонт! +20% бонус', 'ach');
+  else toast('✅ Заказ выполнен');
+  render();
+}
+function floatTextAtCursor(text, color, targetEl){
+  if (state.settings.animations === false) return;
+  if (reducedMotion) return;
+  const el = document.createElement('div');
+  el.className = 'float-text';
+  el.textContent = text;
+  el.style.color = color;
+  let x, y;
+  if (targetEl){
+    const rect = targetEl.getBoundingClientRect();
+    x = rect.left + rect.width / 2;
+    y = rect.top - 8;
+  } else {
+    x = window.innerWidth / 2;
+    y = window.innerHeight / 2;
+  }
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1500);
+}
+
+/* ============================================================
+   ПОКУПКИ
+   ============================================================ */
+function buyStaff(id){
+  const st = STAFF.find(s => s.id === id);
+  if (!st) return;
+  const cost = staffCost(st);
+  if (state.money.lt(cost)){ toast('Недостаточно денег', 'event'); SoundManager.play('error'); return; }
+  state.money = state.money.sub(cost);
+  state.staff[id] = (state.staff[id] || 0) + 1;
+  state.totalPurchases = (state.totalPurchases || 0) + 1;
+  SoundManager.play('buy');
+  saveNow();
+  render();
+}
+function buyUpgrade(id){
+  const u = UPGRADES.find(x => x.id === id);
+  if (!u) return;
+  if (isUpgradeMaxed(u)) return;
+  const cost = upgradeCost(u);
+  if (state.money.lt(cost)){ toast('Недостаточно денег', 'event'); SoundManager.play('error'); return; }
+  state.money = state.money.sub(cost);
+  state.upgrades[id] = (state.upgrades[id] || 0) + 1;
+  state.totalPurchases = (state.totalPurchases || 0) + 1;
+  if (!state._seenUpgrades) state._seenUpgrades = {};
+  state._seenUpgrades[id] = true;
+  SoundManager.play('buy');
+  saveNow();
+  render();
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const TABS = [
+  { id:'workshop', name:'🏠 Мастерская' },
+  { id:'orders',   name:'📋 Заказы',   badge: () => state.currentOrder ? 1 : 0 },
+  { id:'upgrades', name:'🛠️ Улучшения' },
+  { id:'codex',    name:'📖 Кодекс' },
+  { id:'albums',   name:'📚 Альбомы' },
+  { id:'quests',   name:'🎯 Этапы' },
+  { id:'prestige', name:'💎 Престиж',  badge: () => prestigeXPGain() >= 1 ? 1 : 0 },
+  { id:'stats',    name:'📊 Статистика' },
+  { id:'settings', name:'⚙️ Настройки' },
+];
+function buildNav(){
+  const nav = $('nav');
+  nav.innerHTML = TABS.map(t => {
+    const badge = t.badge && t.badge() ? ' <span class="dot"></span>' : '';
+    return `<button data-tab="${t.id}" class="${t.id === activeTab ? 'active' : ''}">${t.name}${badge}</button>`;
+  }).join('');
+  nav.querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      activeTab = b.dataset.tab;
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      $('tab-' + activeTab).classList.add('active');
+      SoundManager.play('click');
+      buildNav();
+      render();
+    };
+  });
+}
+function updateTopRes(){
+  $('res-money').textContent = fmt(state.money);
+  $('res-rep').textContent   = fmt(state.reputation);
+  $('res-parts').textContent = fmt(state.spareParts);
+  $('res-xp').textContent    = fmt(state.xp);
+  const st = STAGES.find(s => s.id === state.stage);
+  $('subtitle').textContent = `Империя Ремонта · Этап ${state.stage} · ${st ? st.name : ''}`;
+  const evEl = $('active-event');
+  if (evEl){
+    if (state.activeEvent){
+      const ev = EVENTS.find(e=>e.id === state.activeEvent.id);
+      const remaining = Math.max(0, Math.ceil((state.activeEvent.expiresAt - now()) / 1000));
+      if (ev){
+        evEl.classList.remove('hidden');
+        $('event-icon').textContent = ev.icon;
+        $('event-name').textContent = ev.name;
+        $('event-timer').textContent = `${remaining}с`;
+      }
+    } else {
+      evEl.classList.add('hidden');
+    }
+  }
+}
+function render(){
+  updateTopRes();
+  if (activeTab === 'workshop') renderWorkshop();
+  else if (activeTab === 'orders') renderOrders();
+  else if (activeTab === 'upgrades') renderUpgrades();
+  else if (activeTab === 'codex') renderCodex();
+  else if (activeTab === 'albums') renderAlbums();
+  else if (activeTab === 'quests') renderQuests();
+  else if (activeTab === 'prestige') renderPrestige();
+  else if (activeTab === 'stats') renderStats();
+  else if (activeTab === 'settings') renderSettings();
+}
+function renderWorkshop(){
+  const inc = totalIncome();
+  const staffRows = STAFF.map(st => {
+    const owned = state.staff[st.id] || 0;
+    const cost = staffCost(st);
+    const can = state.money.gte(cost);
+    const income = staffIncome(st);
+    const locked = owned === 0 && state.money.lt(cost.mul(0.5));
+    return `<div class="staff-card ${owned ? 'owned' : ''} ${locked && owned === 0 ? 'locked' : ''}">
+      <div class="staff-ico">${st.icon}</div>
+      <div class="staff-info">
+        <div class="staff-name">${st.name}</div>
+        <div class="staff-meta">${fmt(st.baseIncome)} ₽/сек каждый</div>
+        ${owned ? `<div class="small good">Сейчас: +${fmt(income)} ₽/сек</div>` : `<div class="small muted">Не нанят</div>`}
+      </div>
+      <div style="text-align:right">
+        <div class="staff-count">×${owned}</div>
+        <button class="buy-btn ${can ? '' : 'cant'}" data-staff="${st.id}" ${can ? '' : 'disabled'}>
+          ${fmt(cost)} ₽
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+  const nextStage = STAGES.find(s => s.id === state.stage + 1);
+  const nextGoal = nextStage ? `До этапа ${nextStage.id}: ${fmt(nextStage.unlockMoney)} ₽` : 'Все этапы достигнуты!';
+  const progress = nextStage ? clamp(state.money.div(nextStage.unlockMoney).toNumber(), 0, 1) : 1;
+  const dailyHtml = state.dailyClaimed
+    ? `<div class="card" style="margin-bottom:14px;text-align:center">
+        <b>🎁 Ежедневная награда получена</b>
+        <p class="muted small">Возвращайтесь завтра! Серия: ${state.dailyStreak} дней</p>
+      </div>`
+    : `<div class="card" style="margin-bottom:14px">
+        <div class="section-title"><b>🎁 Ежедневная награда</b><span class="muted small">Серия: ${state.dailyStreak} дн.</span></div>
+        <div class="daily-grid">${DAILY_REWARDS.map((r, i) => {
+          const claimed = i < state.dailyStreak - 1;
+          const todayDay = i === state.dailyStreak - 1;
+          return `<div class="daily-day ${claimed ? 'claimed' : ''} ${todayDay ? 'today' : ''}">
+            <span class="day-icon">${r.icon}</span>
+            <div>${i + 1}</div>
+          </div>`;
+        }).join('')}</div>
+        <button class="premium-btn" id="claim-daily" style="width:100%;margin-top:8px">Забрать награду дня ${state.dailyStreak}</button>
+      </div>`;
+  $('tab-workshop').innerHTML = `
+    ${dailyHtml}
+    <div class="income-hero">
+      <div class="label">Доход в секунду</div>
+      <div class="value">+${fmt(inc)} ₽</div>
+      <div class="sub">${state.activeEvent ? `🔥 Активно: ${(EVENTS.find(e=>e.id===state.activeEvent.id)||{}).name || ''}` : 'Спокойный день в мастерской'}</div>
+      <div class="bonuses">
+        <span class="pill">🔧 Инструменты ×${fmtShort(toolMultiplier())}</span>
+        <span class="pill">🏢 Помещение ×${fmtShort(facilityMultiplier())}</span>
+        <span class="pill">🧪 Исследования ×${fmtShort(researchMultiplier())}</span>
+        <span class="pill">📖 Кодекс ×${fmtShort(codexBonus())}</span>
+        <span class="pill">📚 Альбомы ×${fmtShort(albumBonus())}</span>
+        <span class="pill">💎 Престиж ×${fmtShort(prestigeIncomeMultiplier())}</span>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title">
+        <b>${nextGoal}</b>
+        <span class="muted small">${(progress*100).toFixed(1)}%</span>
+      </div>
+      <div class="progress"><div style="transform:scaleX(${progress})"></div></div>
+    </div>
+    <h3>👥 Персонал мастерской</h3>
+    <div class="grid grid-2" style="margin-top:10px">${staffRows}</div>
+  `;
+  $('tab-workshop').querySelectorAll('[data-staff]').forEach(b => {
+    b.onclick = () => buyStaff(b.dataset.staff);
+  });
+  const claimBtn = $('claim-daily');
+  if (claimBtn) claimBtn.onclick = claimDaily;
+}
+function renderOrders(){
+  const tab = $('tab-orders');
+  if (!state.currentOrder){
+    const perH = orderFrequencyPerHour();
+    tab.innerHTML = `
+      <div class="card" style="text-align:center;padding:36px 20px">
+        <div style="font-size:56px;margin-bottom:10px">📋</div>
+        <h2>Свободных заказов нет</h2>
+        <p class="muted">Поток клиентов: ~${fmt(perH)} заказов в час</p>
+        <button class="premium-btn" id="take-order" style="margin-top:16px">Взять следующий заказ</button>
+        <p class="muted small" style="margin-top:16px">Активные заказы дают в 10–20× больше, чем idle-доход за то же время</p>
+      </div>
+    `;
+    $('take-order').onclick = takeOrder;
+    return;
+  }
+  const order = state.currentOrder;
+  const fault = FAULTS[order.faultId];
+  const client = CLIENTS.find(c => c.id === order.clientId) || CLIENTS[0];
+  const d = state.diagnosis;
+  const r = state.repair;
+  const testRows = order.tests.map(t => {
+    const done = d.tests.includes(t);
+    const label = t === 'visual' ? '🔎 Визуальный осмотр' : '⚡ Проверка мультиметром';
+    return `<button class="test-btn ${done ? 'done' : ''}" data-test="${t}" ${done ? 'disabled' : ''}>
+      ${label}${done ? ' ✓' : ''}
+    </button>`;
+  }).join('');
+  const testResults = d.tests.map(t => {
+    const txt = t === 'visual' ? fault.tests.visual : fault.tests.mult;
+    return `<div class="test-result"><b>${t === 'visual' ? 'Осмотр' : 'Мультиметр'}:</b> ${txt}</div>`;
+  }).join('');
+  const candidateBtns = order.candidates.map(cid => {
+    const cf = FAULTS[cid];
+    const selected = d.verdict === cid ? ' selected' : '';
+    return `<button class="choice-btn${selected}" data-verdict="${cid}" ${d.confirmed ? 'disabled' : ''}>
+      ${cf.icon} ${cf.name}
+    </button>`;
+  }).join('');
+  let repairSection = '';
+  if (!d.confirmed){
+    repairSection = `<p class="muted">Сначала подтвердите диагноз.</p>`;
+  } else {
+    const opts = getRepairOptions();
+    const placedCount = r.placed.length;
+    const totalCount = fault.fix.length;
+    if (placedCount >= totalCount){
+      repairSection = `<p class="good"><b>✓ Все действия выполнены. Проверяем...</b></p>`;
+    } else {
+      repairSection = `
+        <p>Выберите следующее действие. <b>Порядок важен</b>.</p>
+        <div class="grid grid-2">
+          ${opts.map(o => {
+            const done = o.correct && r.placed.includes(o.index);
+            return `<button class="repair-btn ${done ? 'done' : ''}" data-rep="${o.index}" ${done ? 'disabled' : ''}>
+              ${done ? '✓ ' : ''}${o.text}
+            </button>`;
+          }).join('')}
+        </div>
+        <div class="progress" style="margin-top:12px"><div style="transform:scaleX(${placedCount / totalCount})"></div></div>
+        <div class="muted small">Выполнено: ${placedCount} / ${totalCount} · ошибок: ${r.mistakes}</div>
+      `;
+    }
+  }
+  tab.innerHTML = `
+    <div class="order-card">
+      <div class="client-row">
+        <div class="client-av">${client.icon}</div>
+        <div>
+          <div class="client-name">${client.name}</div>
+          <div class="client-role">${client.role}</div>
+        </div>
+      </div>
+      <p><i>${client.line}</i></p>
+      <p><b>Жалоба:</b> ${fault.symptoms.join(', ')}</p>
+      <p>${fault.symptoms.map(s => `<span class="pill">${s}</span>`).join('')}</p>
+      <p class="muted small">Оплата ~${fmt(order.reward)} ₽ · +${order.rep} ⭐ · +${2 + getUpgradeLevel('syn')*2 + (state.prestigeUpgrades.p_parts||0)*2} 🔧</p>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>🔍 Диагностика</h3>
+        <div style="margin-top:8px">${testRows}</div>
+        ${testResults}
+      </div>
+      <div class="card">
+        <h3>📝 Вердикт</h3>
+        <div style="margin-top:8px">${candidateBtns}</div>
+        <button class="premium-btn" id="confirm-diagnosis" style="margin-top:8px;width:100%" ${(!d.verdict || d.confirmed) ? 'disabled' : ''}>
+          ${d.confirmed ? '✓ Подтверждено' : 'Подтвердить диагноз'}
+        </button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>🛠️ Ремонт</h3>
+      ${repairSection}
+    </div>
+  `;
+  tab.querySelectorAll('[data-test]').forEach(b => b.onclick = () => runTest(b.dataset.test));
+  tab.querySelectorAll('[data-verdict]').forEach(b => b.onclick = () => selectVerdict(b.dataset.verdict));
+  tab.querySelectorAll('[data-rep]').forEach(b => b.onclick = () => {
+    const k = b.dataset.rep;
+    doRepairAction(k.startsWith('w') ? k : Number(k));
+  });
+  const confirmBtn = $('confirm-diagnosis');
+  if (confirmBtn) confirmBtn.onclick = confirmDiagnosis;
+}
+function renderUpgrades(){
+  const catNav = Object.entries(CATEGORIES).map(([id, c]) =>
+    `<button data-cat="${id}" class="${activeCatTab === id ? 'active' : ''}">${c.icon} ${c.name}</button>`
+  ).join('');
+  const filtered = UPGRADES.filter(u => u.cat === activeCatTab);
+  const rows = filtered.map(u => {
+    const lvl = getUpgradeLevel(u.id);
+    const maxed = isUpgradeMaxed(u);
+    const cost = upgradeCost(u);
+    const can = !maxed && state.money.gte(cost);
+    const isNew = can && lvl === 0 && !state._seenUpgrades?.[u.id];
+    const cls = (maxed ? 'bought' : (can ? '' : 'disabled')) + (isNew ? ' is-new' : '');
+    return `<div class="upg-card ${cls}" data-upg="${u.id}">
+      ${maxed ? '<div class="upg-badge max">MAX</div>' : (lvl > 0 ? `<div class="upg-badge">${lvl}/${u.maxLevel}</div>` : '')}
+      <div class="upg-head">
+        <span class="upg-ico">${u.icon}</span>
+        <span class="upg-name">${u.name}</span>
+      </div>
+      <div class="upg-desc">${u.desc}</div>
+      <div class="upg-foot">
+        <span class="upg-cost ${can || maxed ? '' : 'cant'}">${maxed ? 'МАКС' : fmt(cost) + ' ₽'}</span>
+        <span class="upg-level">${lvl}/${u.maxLevel}</span>
+      </div>
+    </div>`;
+  }).join('');
+  $('tab-upgrades').innerHTML = `
+    <div class="cat-tabs">${catNav}</div>
+    <div class="grid grid-3">${rows}</div>
+  `;
+  $('tab-upgrades').querySelectorAll('[data-cat]').forEach(b => {
+    b.onclick = () => { activeCatTab = b.dataset.cat; SoundManager.play('click'); render(); };
+  });
+  $('tab-upgrades').querySelectorAll('[data-upg]').forEach(b => {
+    b.onclick = () => buyUpgrade(b.dataset.upg);
+  });
+}
+function renderCodex(){
+  const discovered = Object.keys(state.codex).length;
+  const total = Object.keys(FAULTS).length;
+  const cards = Object.entries(FAULTS).map(([id, f]) => {
+    const known = !!state.codex[id];
+    if (!known){
+      return `<div class="codex-card undiscovered" data-rarity="${f.rarity}">
+        <div class="codex-head">
+          <span class="codex-ico">❓</span>
+          <div>
+            <div class="codex-name">Неизвестно</div>
+            <div class="codex-rarity">${RARITY_LABEL[f.rarity]}</div>
+          </div>
+        </div>
+        <div class="codex-body">Ещё не встречалось.</div>
+      </div>`;
+    }
+    return `<div class="codex-card" data-rarity="${f.rarity}">
+      <div class="codex-head">
+        <span class="codex-ico">${f.icon}</span>
+        <div>
+          <div class="codex-name">${f.name}</div>
+          <div class="codex-rarity">${RARITY_LABEL[f.rarity]} · ${f.part}</div>
+        </div>
+      </div>
+      <div class="codex-body">
+        <p><b>Симптомы:</b> ${f.symptoms.join(', ')}</p>
+        <p><b>Причины:</b> ${f.causes}</p>
+        <p><b>Отремонтировано:</b> ${state.codex[id].count} раз</p>
+      </div>
+    </div>`;
+  }).join('');
+  $('tab-codex').innerHTML = `
+    <div class="section-title">
+      <h2>📖 Кодекс неисправностей</h2>
+      <span class="muted">${discovered} / ${total} · бонус: +${(discovered * 2)}%</span>
+    </div>
+    <div class="progress" style="margin-bottom:16px"><div style="transform:scaleX(${discovered/total})"></div></div>
+    <div class="grid grid-3">${cards}</div>
+  `;
+}
+function renderAlbums(){
+  const cards = ALBUMS.map(a => {
+    const discovered = (state.albums[a.id] && state.albums[a.id].discovered) || [];
+    const complete = state.albums[a.id] && state.albums[a.id].complete;
+    return `<div class="album-card ${complete ? 'complete' : ''}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <span style="font-size:28px">${a.icon}</span>
+        <div>
+          <b>${a.name}</b>
+          <div class="muted small">${a.rewards}</div>
+        </div>
+      </div>
+      <div class="album-slots">
+        ${a.faults.map(fid => {
+          const filled = discovered.includes(fid);
+          const f = FAULTS[fid];
+          return `<div class="album-slot ${filled ? 'filled' : ''}">${filled ? f.icon : '?'}</div>`;
+        }).join('')}
+      </div>
+      <div class="small muted" style="margin-top:8px">${discovered.length} / ${a.faults.length}</div>
+    </div>`;
+  }).join('');
+  const completeCount = ALBUMS.filter(a => state.albums[a.id] && state.albums[a.id].complete).length;
+  $('tab-albums').innerHTML = `
+    <div class="section-title">
+      <h2>📚 Альбомы заказов</h2>
+      <span class="muted">${completeCount} / ${ALBUMS.length}</span>
+    </div>
+    <p class="muted">Собирайте редкие неисправности. Каждый собранный альбом даёт бонус к доходу.</p>
+    <div class="grid grid-3" style="margin-top:14px">${cards}</div>
+  `;
+}
+function renderQuests(){
+  const stagesHtml = STAGES.map(s => {
+    const unlocked = state.money.gte(s.unlockMoney) || state.stage >= s.id;
+    const current = state.stage === s.id;
+    return `<div class="card" style="${current ? 'border-color:rgba(255,207,116,.55)' : ''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <b>Этап ${s.id}: ${s.name}</b>
+        <span class="muted small">${unlocked ? '✓' : '🔒'}</span>
+      </div>
+      <p class="muted small">${s.desc}</p>
+      <p class="small">Порог: ${fmt(s.unlockMoney)} ₽</p>
+      ${current ? '<div class="pill" style="background:rgba(255,207,116,.18);color:var(--gold);border-color:rgba(255,207,116,.4)">Текущий этап</div>' : ''}
+    </div>`;
+  }).join('');
+  $('tab-quests').innerHTML = `
+    <h2>🎯 Этапы развития мастерской</h2>
+    <p class="muted">Этапы разблокируются по мере роста состояния.</p>
+    <div class="grid grid-2" style="margin-top:14px">${stagesHtml}</div>
+  `;
+}
+function renderPrestige(){
+  const gain = prestigeXPGain();
+  const upgrades = PRESTIGE_UPGRADES.map(u => {
+    const lvl = state.prestigeUpgrades[u.id] || 0;
+    const maxed = lvl >= u.maxLevel;
+    const cost = u.cost * (lvl + 1);
+    const can = !maxed && state.xp.gte(cost);
+    return `<div class="upg-card ${maxed ? 'bought' : (can ? '' : 'disabled')}" data-prestige="${u.id}">
+      ${maxed ? '<div class="upg-badge max">MAX</div>' : (lvl > 0 ? `<div class="upg-badge">${lvl}/${u.maxLevel}</div>` : '')}
+      <div class="upg-head">
+        <span class="upg-ico">${u.icon}</span>
+        <span class="upg-name">${u.name}</span>
+      </div>
+      <div class="upg-desc">${u.desc}</div>
+      <div class="upg-foot">
+        <span class="upg-cost ${can || maxed ? '' : 'cant'}">${maxed ? 'МАКС' : '💎 ' + cost}</span>
+        <span class="upg-level">${lvl}/${u.maxLevel}</span>
+      </div>
+    </div>`;
+  }).join('');
+  $('tab-prestige').innerHTML = `
+    <div class="prestige-hero">
+      <div class="label">При следующем престиже</div>
+      <div class="value">💎 +${fmt(gain)}</div>
+      <div class="muted small" style="max-width:520px;margin:8px auto 0">Престиж сбрасывает деньги, персонал и апгрейды, но сохраняет 💎, достижения, кодекс, альбомы и престиж-улучшения.</div>
+      <button class="btn-xp" id="do-prestige" ${gain < 1 ? 'disabled' : ''}>🏆 Открыть филиал</button>
+    </div>
+    <h3>💎 Престиж-улучшения (${fmt(state.xp)} 💎 доступно)</h3>
+    <div class="grid grid-3" style="margin-top:10px">${upgrades}</div>
+  `;
+  $('tab-prestige').querySelectorAll('[data-prestige]').forEach(b => {
+    b.onclick = () => buyPrestigeUpgrade(b.dataset.prestige);
+  });
+  const dp = $('do-prestige');
+  if (dp) dp.onclick = () => {
+    if (gain < 1) return;
+    showModal(
+      '🏆 Открыть филиал?',
+      `<p>Вы получите <b class="violet">💎 ${fmt(gain)}</b>.</p>
+       <p>Сбросится: деньги, персонал, улучшения.</p>
+       <p>Останется: 💎, достижения, кодекс, альбомы, престиж-улучшения.</p>`,
+      () => doPrestige()
+    );
+  };
+}
+function renderStats(){
+  const achList = ACHIEVEMENTS.map(a => {
+    const unlocked = !!state.achievements[a.id];
+    return `<div class="ach ${unlocked ? 'unlocked' : 'locked'}">
+      <div class="ach-ico">${a.icon}</div>
+      <div>
+        <div class="ach-name">${a.name}</div>
+        <div class="ach-desc">${a.desc}</div>
+      </div>
+    </div>`;
+  }).join('');
+  const staffTotal = STAFF.reduce((s, st) => s + (state.staff[st.id] || 0), 0);
+  const upgTotal = Object.values(state.upgrades).reduce((a, b) => a + b, 0);
+  const codexCount = Object.keys(state.codex).length;
+  const playH = Math.floor(state.playTime / 3600);
+  const playM = Math.floor((state.playTime % 3600) / 60);
+  $('tab-stats').innerHTML = `
+    <h2>📊 Статистика</h2>
+    <div class="stat-grid" style="margin-top:12px">
+      <div class="stat-box"><div class="label">Всего заработано</div><div class="value gold">${fmt(state.totalMoney)} ₽</div></div>
+      <div class="stat-box"><div class="label">Заказов выполнено</div><div class="value">${fmtInt(state.totalOrders)}</div></div>
+      <div class="stat-box"><div class="label">Идеальных диагнозов</div><div class="value good">${fmtInt(state.perfectDiagnoses || 0)}</div></div>
+      <div class="stat-box"><div class="label">Идеальных ремонтов</div><div class="value good">${fmtInt(state.perfectRepairs || 0)}</div></div>
+      <div class="stat-box"><div class="label">Сотрудников</div><div class="value cyan">${fmtInt(staffTotal)}</div></div>
+      <div class="stat-box"><div class="label">Апгрейдов</div><div class="value blue">${fmtInt(upgTotal)}</div></div>
+      <div class="stat-box"><div class="label">Кодекс</div><div class="value">${codexCount} / ${Object.keys(FAULTS).length}</div></div>
+      <div class="stat-box"><div class="label">Престижей</div><div class="value violet">${fmtInt(state.totalPrestiges)}</div></div>
+      <div class="stat-box"><div class="label">Время в игре</div><div class="value">${playH}ч ${playM}м</div></div>
+      <div class="stat-box"><div class="label">Текущий доход</div><div class="value good">${fmt(totalIncome())} ₽/сек</div></div>
+    </div>
+    <h3>🏅 Достижения (${Object.keys(state.achievements).length} / ${ACHIEVEMENTS.length})</h3>
+    <div class="ach-grid" style="margin-top:10px">${achList}</div>
+  `;
+}
+function renderSettings(){
+  const slotsHtml = [1,2,3].map(slot => {
+    const saved = loadGame(slot);
+    const active = state._slot === slot;
+    const meta = saved ? `₽${fmt(saved.totalMoney || 0)} · ${saved.totalPrestiges||0} престижей` : 'Пусто';
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <b>Слот ${slot} ${active ? '· <span class="gold">Активный</span>' : ''}</b>
+          <div class="muted small">${meta}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${!active && saved ? `<button class="buy-btn" data-load="${slot}">Загрузить</button>` : ''}
+          ${!active ? `<button class="buy-btn" data-switch="${slot}">Создать</button>` : ''}
+          ${saved ? `<button class="buy-btn" style="border-color:rgba(255,120,120,.5);color:var(--red)" data-del="${slot}">Удалить</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  const musicAvail = MusicManager.available;
+  $('tab-settings').innerHTML = `
+    <h2>⚙️ Настройки</h2>
+    <h3>Звук</h3>
+    <div class="card" style="margin-bottom:14px">
+      <div class="settings-row">
+        <label for="set-sound">🔊 Звуковые эффекты</label>
+        <input type="checkbox" id="set-sound" ${state.settings.sound !== false ? 'checked' : ''}>
+      </div>
+      <div class="settings-row">
+        <label for="set-volume">Громкость эффектов</label>
+        <input type="range" id="set-volume" min="0" max="100" value="${Math.round((state.settings.volume ?? 0.5) * 100)}">
+      </div>
+      <div class="settings-row">
+        <label for="set-music">🎵 Фоновая музыка ${!musicAvail ? '<span class="muted small">(файл не найден)</span>' : ''}</label>
+        <input type="checkbox" id="set-music" ${state.settings.music ? 'checked' : ''} ${!musicAvail ? 'disabled' : ''}>
+      </div>
+      <div class="settings-row">
+        <label for="set-music-volume">Громкость музыки</label>
+        <input type="range" id="set-music-volume" min="0" max="100" value="${Math.round((state.settings.musicVolume ?? 0.22) * 100)}" ${!musicAvail ? 'disabled' : ''}>
+      </div>
+      <p class="muted small" style="margin-top:8px">Положите MP3-файл в <code>assets/audio/workshop-theme.mp3</code> рядом с этим HTML — тогда музыка станет доступна.</p>
+    </div>
+    <h3>Интерфейс</h3>
+    <div class="card" style="margin-bottom:14px">
+      <div class="settings-row">
+        <label for="set-anim">✨ Анимации</label>
+        <input type="checkbox" id="set-anim" ${state.settings.animations !== false ? 'checked' : ''}>
+      </div>
+    </div>
+    <h3>Сохранения</h3>
+    <div class="grid" style="gap:8px;margin-bottom:14px">${slotsHtml}</div>
+    <h3>Экспорт / Импорт</h3>
+    <div class="card">
+      <textarea id="export-area" rows="4" style="font-family:monospace;font-size:11px" readonly></textarea>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button class="buy-btn" id="do-export">📤 Экспорт</button>
+        <button class="buy-btn" id="do-copy">📋 Скопировать</button>
+        <button class="buy-btn" id="do-import">📥 Импорт</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <button class="buy-btn" style="border-color:rgba(255,120,120,.5);color:var(--red)" id="do-reset">⚠️ Полный сброс</button>
+    </div>
+  `;
+  $('set-sound').onchange = (e) => {
+    state.settings.sound = e.target.checked;
+    SoundManager.setEnabled(e.target.checked);
+    if (e.target.checked) SoundManager.play('click');
+    saveNow();
+  };
+  $('set-volume').oninput = (e) => {
+    state.settings.volume = Number(e.target.value) / 100;
+    SoundManager.setVolume(state.settings.volume);
+    saveNow();
+  };
+  $('set-volume').onchange = () => SoundManager.play('click');
+  $('set-music').onchange = (e) => {
+    state.settings.music = e.target.checked;
+    MusicManager.setEnabled(e.target.checked);
+    if (e.target.checked){
+      state._musicUsed = true;
+      SoundManager.play('music_start');
+    }
+    saveNow();
+    MusicManager.updateHeaderBtn();
+  };
+  $('set-music-volume').oninput = (e) => {
+    state.settings.musicVolume = Number(e.target.value) / 100;
+    MusicManager.setVolume(state.settings.musicVolume);
+    saveNow();
+  };
+  $('set-anim').onchange = (e) => {
+    state.settings.animations = e.target.checked;
+    saveNow();
+  };
+  $('tab-settings').querySelectorAll('[data-load]').forEach(b => {
+    b.onclick = () => {
+      const slot = Number(b.dataset.load);
+      showModal('Загрузить слот?', `Текущий прогресс будет заменён слотом ${slot}.`, () => {
+        saveNow();
+        const loaded = loadGame(slot);
+        if (loaded){
+          state = loaded;
+          SoundManager.setEnabled(state.settings.sound !== false);
+          SoundManager.setVolume(state.settings.volume ?? 0.5);
+          MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
+          if (state.settings.music) MusicManager.setEnabled(true);
+          render();
+          toast('✓ Слот загружен');
+        }
+      });
+    };
+  });
+  $('tab-settings').querySelectorAll('[data-switch]').forEach(b => {
+    b.onclick = () => {
+      const slot = Number(b.dataset.switch);
+      showModal('Начать в новом слоте?', `Создать новую игру в слоте ${slot}?`, () => {
+        saveNow();
+        state = defaultState();
+        state._slot = slot;
+        state._firstRun = false;
+        saveNow();
+        MusicManager.setEnabled(false);
+        render();
+        toast('✓ Новый слот создан');
+      });
+    };
+  });
+  $('tab-settings').querySelectorAll('[data-del]').forEach(b => {
+    b.onclick = () => {
+      const slot = Number(b.dataset.del);
+      showModal('Удалить слот?', `Удалить сохранение из слота ${slot}?`, () => {
+        deleteSave(slot);
+        render();
+        toast('Слот удалён');
+      });
+    };
+  });
+  $('do-export').onclick = () => {
+    try {
+      const data = btoa(unescape(encodeURIComponent(JSON.stringify(serializeState(state)))));
+      $('export-area').value = data;
+      toast('✓ Экспортировано');
+    } catch(e){ toast('❌ Ошибка экспорта'); }
+  };
+  $('do-copy').onclick = () => {
+    const area = $('export-area');
+    if (!area.value){
+      try {
+        const data = btoa(unescape(encodeURIComponent(JSON.stringify(serializeState(state)))));
+        area.value = data;
+      } catch(e){ toast('❌ Ошибка'); return; }
+    }
+    area.select();
+    try { document.execCommand('copy'); toast('✓ Скопировано'); }
+    catch(e){ if (navigator.clipboard) navigator.clipboard.writeText(area.value); toast('✓ Скопировано'); }
+  };
+  $('do-import').onclick = () => {
+    const val = $('export-area').value.trim();
+    if (!val){ toast('Вставьте данные в поле'); return; }
+    let fresh;
+    try {
+      const parsed = JSON.parse(decodeURIComponent(escape(atob(val))));
+      if (!parsed || typeof parsed !== 'object') throw new Error('не объект');
+      const restored = deserializeState(parsed);
+      fresh = Object.assign(defaultState(), restored);
+      ['money','reputation','spareParts','xp','totalMoney','totalRepEarned','offlineEarningsTotal'].forEach(k => {
+        if (!(fresh[k] instanceof Decimal)) fresh[k] = dec(fresh[k] || 0);
+      });
+      const required = ['totalOrders','totalPrestiges','stage','playTime'];
+      for (const k of required){
+        const v = Number(fresh[k]);
+        if (!Number.isFinite(v) || v < 0) throw new Error(`поле ${k} некорректно`);
+      }
+      if (fresh.stage < 1 || fresh.stage > 6) throw new Error('этап вне диапазона');
+    } catch(e){
+      SoundManager.play('error');
+      toast('❌ Импорт отклонён: ' + e.message, 'event');
+      return;
+    }
+    showModal('Импортировать?', 'Текущий прогресс будет заменён. Продолжить?', () => {
+      state = fresh;
+      state._firstRun = false;
+      saveNow();
+      SoundManager.setEnabled(state.settings.sound !== false);
+      SoundManager.setVolume(state.settings.volume ?? 0.5);
+      MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
+      render();
+      toast('✓ Импортировано');
+    });
+  };
+  $('do-reset').onclick = () => {
+    showModal('Полный сброс?', 'Всё будет удалено безвозвратно.', () => {
+      deleteSave(state._slot);
+      state = defaultState();
+      state._firstRun = false;
+      saveNow();
+      MusicManager.setEnabled(false);
+      render();
+      toast('Игра сброшена');
+    });
+  };
+}
+let modalCallback = null;
+function showModal(title, body, onOk, showCancel){
+  $('modal-title').textContent = title;
+  $('modal-body').innerHTML = body;
+  $('modal').classList.add('show');
+  modalCallback = typeof onOk === 'function' ? onOk : null;
+  if (showCancel === false){
+    $('modal-cancel').style.display = 'none';
+  } else {
+    $('modal-cancel').style.display = '';
+  }
+}
+$('modal-cancel').onclick = () => { $('modal').classList.remove('show'); modalCallback = null; };
+$('modal-ok').onclick = () => {
+  const cb = modalCallback;
+  $('modal').classList.remove('show');
+  modalCallback = null;
+  if (typeof cb === 'function') cb();
+};
+$('modal').addEventListener('click', e => {
+  if (e.target === $('modal')){ $('modal').classList.remove('show'); modalCallback = null; }
+});
+function toast(msg, type){
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.textContent = msg;
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+function uiUpdateLoop(t){
+  rafId = requestAnimationFrame(uiUpdateLoop);
+  const dt = Math.min((t - lastFrameTime) / 1000, 0.5);
+  lastFrameTime = t;
+  if (document.hidden) return;
+  gameTick(dt);
+  if (t - lastUITick >= 100){
+    lastUITick = t;
+    updateTopRes();
+    if (activeTab === 'workshop'){
+      const heroVal = document.querySelector('#tab-workshop .income-hero .value');
+      if (heroVal) heroVal.textContent = `+${fmt(totalIncome())} ₽`;
+      STAFF.forEach(st => {
+        const btn = document.querySelector(`[data-staff="${st.id}"]`);
+        if (!btn) return;
+        const cost = staffCost(st);
+        btn.textContent = fmt(cost) + ' ₽';
+        btn.disabled = state.money.lt(cost);
+        btn.classList.toggle('cant', state.money.lt(cost));
+      });
+    }
+    if (activeTab === 'orders' && state.currentOrder && state.repair){
+      const progressBar = document.querySelector('#tab-orders .progress > div');
+      if (progressBar){
+        const total = FAULTS[state.currentOrder.faultId].fix.length;
+        progressBar.style.transform = `scaleX(${state.repair.placed.length / total})`;
+      }
+    }
+  }
+}
+function init(){
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  reducedMotion = mq.matches;
+  const loaded = loadGame(1);
+  if (loaded){
+    state = loaded;
+    state._firstRun = false;
+    if (reducedMotion) state.settings.animations = false;
+    SoundManager.setEnabled(state.settings.sound !== false);
+    SoundManager.setVolume(state.settings.volume ?? 0.5);
+    MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
+    processOffline();
+  } else {
+    state = defaultState();
+    state._slot = 1;
+    state._firstRun = false;
+    if (reducedMotion) state.settings.animations = false;
+    SoundManager.setEnabled(state.settings.sound !== false);
+    SoundManager.setVolume(state.settings.volume ?? 0.5);
+    MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
+    setTimeout(() => toast('👋 Добро пожаловать! Начните с найма студента-практиканта', 'ach'), 500);
+  }
+  if (state.activeEvent && now() >= state.activeEvent.expiresAt){
+    state.activeEvent = null;
+  }
+  checkDaily();
+  buildNav();
+  render();
+
+  // Кнопка музыки в шапке
+  const musicBtn = $('music-btn');
+  if (musicBtn){
+    musicBtn.onclick = () => {
+      MusicManager.toggle();
+      if (state.settings.music){
+        state._musicUsed = true;
+        SoundManager.play('music_start');
+        saveNow();
+      }
+    };
+  }
+  MusicManager.updateHeaderBtn();
+
+  // Пауза музыки при скрытии вкладки
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden){
+      // Мягкая пауза — только если играет
+      if (MusicManager.playing){
+        try { const a = document.querySelector('audio'); } catch(e){}
+        // Мягкая остановка через паузу
+        // Ничего не делаем — браузер сам приглушает в фоне; управляем через Audio
+      }
+    }
+  });
+
+  lastFrameTime = performance.now();
+  rafId = requestAnimationFrame(uiUpdateLoop);
+}
+try {
+  init();
+} catch (e) {
+  console.error('Не удалось запустить игру:', e);
+  document.body.innerHTML = `
+    <div style="padding:40px;color:#ff8a8a;font:16px system-ui;text-align:center;background:#0a0f16;min-height:100vh">
+      <h2>⚠️ Ошибка запуска игры</h2>
+      <pre style="text-align:left;background:#111;padding:16px;border-radius:8px;overflow:auto;max-width:600px;margin:20px auto;font-size:12px">${e.message}\n\n${(e.stack || '').slice(0, 800)}</pre>
+      <button onclick="localStorage.clear();location.reload()" style="padding:10px 20px;border-radius:8px;background:#7be0a1;color:#0a1a11;font-weight:700;border:none;cursor:pointer">Полный сброс и перезапуск</button>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
