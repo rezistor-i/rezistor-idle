@@ -1038,6 +1038,10 @@ const STAFF = [
   { id:'ai',        name:'ИИ-диагност',             icon:'🧠', baseCost:4e7,       baseIncome:180000 },
   { id:'lab',       name:'Лаборатория восстановления', icon:'🔬', baseCost:8e8,      baseIncome:2800000 },
   { id:'quantum',   name:'Квантовый ремонт',        icon:'⚛️', baseCost:1.5e10,    baseIncome:45000000 },
+  { id:'chronos',   name:'Хроно-инженер',           icon:'⏰', baseCost:2.4e11,    baseIncome:7e8 },
+  { id:'forge',     name:'Кузница времени',         icon:'⚒️', baseCost:4e12,      baseIncome:1.2e10 },
+  { id:'singular',  name:'Сингулярность',           icon:'🕳️', baseCost:7e13,      baseIncome:2e11 },
+  { id:'infinity',  name:'Бесконечный цикл',        icon:'♾️', baseCost:1.2e15,    baseIncome:3.5e12 },
 ];
 const STAFF_COST_MULT = 1.15;
 
@@ -1129,7 +1133,11 @@ const FAULTS = {
   liquid:{name:'Залитая плата',icon:'💧',rarity:'epic',part:'Материнская плата', symptoms:['не включается','коррозия'], causes:'Жидкость.', tests:{visual:'Коррозия.',mult:'КЗ.'}, fix:['Отключить питание','Разобрать','Ультразвук','Просушить','Заменить']},
   cpu_die:{name:'Умирающий CPU',icon:'🧊',rarity:'legendary',part:'Процессор', symptoms:['ребуты','синие экраны'], causes:'Деградация.', tests:{visual:'Норма.',mult:'Ошибки при 80°C.'}, fix:['Отключить питание','Тест стабильности','Заменить CPU','Обновить BIOS']},
   gpu_die:{name:'Умирающий видеочип',icon:'🎮',rarity:'legendary',part:'Видеокарта', symptoms:['артефакты','падения'], causes:'Деградация.', tests:{visual:'Артефакты.',mult:'Ошибки VRAM.'}, fix:['Отключить питание','Тест VRAM','Перепайка','Замена GPU']},
-  legend:{name:'Легендарный ремонт',icon:'🏆',rarity:'legendary',part:'Комплекс', symptoms:['всё сломалось'], causes:'Многофакторный.', tests:{visual:'Стресс узлов.',mult:'Все тесты плохие.'}, fix:['Полная разборка','Диагностика','Ремонт каждого','Сборка','Стресс-тест']},
+    legend:{name:'Легендарный ремонт',icon:'🏆',rarity:'legendary',part:'Комплекс', symptoms:['всё сломалось'], causes:'Многофакторный.', tests:{visual:'Стресс узлов.',mult:'Все тесты плохие.'}, fix:['Полная разборка','Диагностика','Ремонт каждого','Сборка','Стресс-тест']},
+  psu_fan:{name:'Заклинивший вентилятор БП',icon:'🌀',rarity:'common',part:'БП', symptoms:['громкий шум','перегрев'], causes:'Износ подшипника.', tests:{visual:'Вентилятор стоит.',mult:'Питание в норме.'}, fix:['Отключить питание','Заменить вентилятор','Проверить запуск']},
+  cmos:{name:'Севшая батарейка CMOS',icon:'🔋',rarity:'common',part:'CMOS', symptoms:['сбивается время','не грузится'], causes:'Севшая батарейка.', tests:{visual:'Дата 2000 год.',mult:'3 В нет.'}, fix:['Отключить питание','Заменить батарейку','Установить время']},
+  pcie_dust:{name:'Окисление контактов PCIe',icon:'🔧',rarity:'common',part:'PCIe', symptoms:['не видит устройство','артефакты'], causes:'Окисление.', tests:{visual:'Налёт на контактах.',mult:'Контакт нестабильный.'}, fix:['Отключить питание','Вынуть устройство','Почистить контакты','Установить обратно']},
+  usb_broken:{name:'Сломанный USB-порт',icon:'🔌',rarity:'common',part:'USB', symptoms:['не работают USB','нет зарядки'], causes:'Механическое повреждение.', tests:{visual:'Погнут порт.',mult:'Питания нет.'}, fix:['Отключить питание','Заменить порт','Проверить работу']},
 };
 
 const CLIENTS = [
@@ -1263,6 +1271,7 @@ function defaultState(){
     igorChoice: null,
     gameWon: false,
     _seenUpgrades: {},
+    recentFaults: [],
     stage: 1,
     currentOrder: null, diagnosis: null,
     lastTick: Date.now(), lastSave: Date.now(), startedAt: Date.now(),
@@ -1335,6 +1344,7 @@ function loadGame(slot){
     if (!merged.albums) merged.albums = {};
     if (!merged.repairMethods) merged.repairMethods = {};
     if (!merged._seenUpgrades) merged._seenUpgrades = {};
+    if (!merged.recentFaults) merged.recentFaults = [];
     if (!merged.seenStages) merged.seenStages = [];
     if (!merged.settings) merged.settings = {};
     if (merged.settings.sound === undefined) merged.settings.sound = true;
@@ -1717,12 +1727,35 @@ function pickRandomFault(){
     4: ['common','uncommon','rare','epic'], 5: ['common','uncommon','rare','epic'],
     6: ['common','uncommon','rare','epic','legendary'],
   }[state.stage] || ['common'];
-  const pool = Object.entries(FAULTS).filter(([id,f]) => allowed.includes(f.rarity));
+
+  if (!state.recentFaults) state.recentFaults = [];
+
+  let pool = Object.entries(FAULTS).filter(([id,f]) => allowed.includes(f.rarity));
+
+  // Анти-повтор: убираем последние 3 поломки
+  const recent = state.recentFaults.slice(-3);
+  const fresh = pool.filter(([id]) => !recent.includes(id));
+  if (fresh.length >= 2) pool = fresh;
+
+  // Discovery bias: шанс выдать неоткрытую поломку (снижается по мере открытия)
+  const seenInPool = pool.filter(([id]) => state.codex[id]).length;
+  const seenRatio = pool.length > 0 ? seenInPool / pool.length : 1;
+  const discoveryBias = Math.max(0, 0.4 * (1 - seenRatio));
+  const unseen = pool.filter(([id,f]) => !state.codex[id] && f.rarity !== 'legendary');
+  if (unseen.length > 0 && Math.random() < discoveryBias){
+    pool = unseen;
+  }
+
+  // Веса + прогрессивные бонусы по этапам
   const weights = pool.map(([id,f]) => {
-    const base = { common:100, uncommon:40, rare:12, epic:3, legendary:0.6 }[f.rarity];
+    let base = { common:60, uncommon:40, rare:15, epic:4, legendary:1 }[f.rarity];
+    if (f.rarity === 'uncommon' && state.stage >= 3) base *= 1.5;
+    if (f.rarity === 'rare' && state.stage >= 4) base *= 1.5;
+    if (f.rarity === 'epic' && state.stage >= 5) base *= 1.5;
     const rareBonus = 1 + (state.prestigeUpgrades.p_rare || 0) * 0.05;
     return f.rarity === 'common' ? base : base * rareBonus;
   });
+
   const totalW = weights.reduce((a,b)=>a+b,0);
   let r = Math.random() * totalW;
   for (let i = 0; i < pool.length; i++){ r -= weights[i]; if (r <= 0) return pool[i][0]; }
@@ -1730,6 +1763,9 @@ function pickRandomFault(){
 }
 function createOrder(){
   const faultId = pickRandomFault();
+  if (!state.recentFaults) state.recentFaults = [];
+  state.recentFaults.push(faultId);
+  if (state.recentFaults.length > 10) state.recentFaults.shift();
   const fault = FAULTS[faultId];
   const client = choice(CLIENTS);
   const similar = Object.keys(FAULTS).filter(id => id !== faultId && FAULTS[id].rarity === fault.rarity);
@@ -1840,15 +1876,52 @@ function chooseStrategy(strategyId){
 /* ============================================================
    ПОКУПКИ
    ============================================================ */
-function buyStaff(id){
+function staffCostForBatch(st, count){
+  const owned = state.staff[st.id] || 0;
+  const base = dec(st.baseCost).mul(state.eventDiscount || 1);
+  if (count <= 0) return dec(0);
+  const r = STAFF_COST_MULT;
+  const sum = dec(r).pow(count).sub(1).div(r - 1);
+  return base.mul(dec(r).pow(owned)).mul(sum);
+}
+
+function staffMaxAffordable(st){
+  const owned = state.staff[st.id] || 0;
+  const base = dec(st.baseCost).mul(state.eventDiscount || 1).mul(dec(STAFF_COST_MULT).pow(owned));
+  const r = STAFF_COST_MULT;
+  const budget = state.money.toNumber();
+  const b = base.toNumber();
+  if (b <= 0 || budget < b) return 0;
+  const maxN = Math.floor(Math.log(1 + budget * (r - 1) / b) / Math.log(r));
+  return Math.max(1, Math.min(maxN, 1000));
+}
+
+function buyStaffBatch(id, mode){
   const st = STAFF.find(s => s.id === id);
   if (!st) return;
-  const cost = staffCost(st);
-  if (state.money.lt(cost)){ toast('Недостаточно денег', 'event'); SoundManager.play('error'); return; }
-  state.money = state.money.sub(cost);
-  state.staff[id] = (state.staff[id] || 0) + 1;
-  state.totalPurchases = (state.totalPurchases || 0) + 1;
-  SoundManager.play('buy'); saveNow(); render();
+  let count;
+  if (mode === 'max' || mode === 'MAX'){
+    count = staffMaxAffordable(st);
+    if (count <= 0) return;
+  } else {
+    count = Number(mode) || 1;
+  }
+  const totalCost = staffCostForBatch(st, count);
+  if (state.money.lt(totalCost)) return;
+  state.money = state.money.sub(totalCost);
+  state.staff[id] = (state.staff[id] || 0) + count;
+  state.totalPurchases = (state.totalPurchases || 0) + count;
+  SoundManager.play('buy');
+  saveNow();
+  render();
+}
+
+function buyStaff(id){
+  buyStaffBatch(id, 1);
+}
+
+function staffCost(st){
+  return staffCostForBatch(st, 1);
 }
 function buyUpgrade(id){
   const u = UPGRADES.find(x => x.id === id);
@@ -1929,20 +2002,28 @@ function renderWorkshop(){
   const inc = totalIncome();
   const staffRows = STAFF.map(st => {
     const owned = state.staff[st.id] || 0;
-    const cost = staffCost(st);
-    const can = state.money.gte(cost);
+    const cost1 = staffCostForBatch(st, 1);
+    const cost2 = staffCostForBatch(st, 2);
+    const cost10 = staffCostForBatch(st, 10);
+    const maxN = staffMaxAffordable(st);
+    const can1 = state.money.gte(cost1);
+    const can2 = state.money.gte(cost2);
+    const can10 = state.money.gte(cost10);
+    const canMax = maxN > 0;
     const income = staffIncome(st);
-    const locked = owned === 0 && state.money.lt(cost.mul(0.5));
-    return `<div class="staff-card ${owned ? 'owned' : ''} ${locked && owned === 0 ? 'locked' : ''}">
-      <div class="staff-ico">${st.icon}</div>
+    const locked = owned === 0 && !can1 && state.money.lt(cost1.mul(0.5));
+    return `<div class="staff-card ${owned ? 'owned' : ''} ${locked ? 'locked' : ''}" style="display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:start">
+      <div class="staff-ico" style="grid-row:1/3">${st.icon}</div>
       <div class="staff-info">
-        <div class="staff-name">${st.name}</div>
+        <div class="staff-name">${st.name} <span style="color:var(--cyan)">×${owned}</span></div>
         <div class="staff-meta">${fmt(st.baseIncome)} ₽/сек каждый</div>
         ${owned ? `<div class="small good">Сейчас: +${fmt(income)} ₽/сек</div>` : `<div class="small muted">Не нанят</div>`}
       </div>
-      <div style="text-align:right">
-        <div class="staff-count">×${owned}</div>
-        <button class="buy-btn ${can ? '' : 'cant'}" data-staff="${st.id}" ${can ? '' : 'disabled'}>${fmt(cost)} ₽</button>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-start">
+        <button class="buy-btn ${can1 ? '' : 'cant'}" data-staff="${st.id}" data-count="1" ${can1 ? '' : 'disabled'} style="padding:5px 8px;font-size:11px">×1 · ${fmt(cost1)}₽</button>
+        <button class="buy-btn ${can2 ? '' : 'cant'}" data-staff="${st.id}" data-count="2" ${can2 ? '' : 'disabled'} style="padding:5px 8px;font-size:11px">×2 · ${fmt(cost2)}₽</button>
+        <button class="buy-btn ${can10 ? '' : 'cant'}" data-staff="${st.id}" data-count="10" ${can10 ? '' : 'disabled'} style="padding:5px 8px;font-size:11px">×10 · ${fmt(cost10)}₽</button>
+        <button class="buy-btn ${canMax ? '' : 'cant'}" data-staff="${st.id}" data-count="max" ${canMax ? '' : 'disabled'} style="padding:5px 8px;font-size:11px">MAX ${maxN}</button>
       </div>
     </div>`;
   }).join('');
@@ -1982,7 +2063,9 @@ function renderWorkshop(){
     <h3>👥 Персонал мастерской</h3>
     <div class="grid grid-2" style="margin-top:10px">${staffRows}</div>
   `;
-  $('tab-workshop').querySelectorAll('[data-staff]').forEach(b => b.onclick = () => buyStaff(b.dataset.staff));
+  $('tab-workshop').querySelectorAll('[data-staff]').forEach(b => {
+    b.onclick = () => buyStaffBatch(b.dataset.staff, b.dataset.count);
+  });
   const claimBtn = $('claim-daily'); if (claimBtn) claimBtn.onclick = claimDaily;
 }
 function renderOrders(){
@@ -2416,11 +2499,23 @@ function uiUpdateLoop(t){
       const heroVal = document.querySelector('#tab-workshop .income-hero .value');
       if (heroVal) heroVal.textContent = `+${fmt(totalIncome())} ₽`;
       STAFF.forEach(st => {
-        const btn = document.querySelector(`[data-staff="${st.id}"]`); if (!btn) return;
-        const cost = staffCost(st);
-        btn.textContent = fmt(cost) + ' ₽';
-        btn.disabled = state.money.lt(cost);
-        btn.classList.toggle('cant', state.money.lt(cost));
+        const btns = document.querySelectorAll(`[data-staff="${st.id}"]`);
+        if (!btns.length) return;
+        const cost1 = staffCostForBatch(st, 1);
+        const cost2 = staffCostForBatch(st, 2);
+        const cost10 = staffCostForBatch(st, 10);
+        const maxN = staffMaxAffordable(st);
+        btns.forEach(btn => {
+          const cnt = btn.dataset.count;
+          let cost, can, label;
+          if (cnt === '1'){ cost = cost1; can = state.money.gte(cost1); label = `×1 · ${fmt(cost1)}₽`; }
+          else if (cnt === '2'){ cost = cost2; can = state.money.gte(cost2); label = `×2 · ${fmt(cost2)}₽`; }
+          else if (cnt === '10'){ cost = cost10; can = state.money.gte(cost10); label = `×10 · ${fmt(cost10)}₽`; }
+          else { can = maxN > 0; label = `MAX ${maxN}`; }
+          btn.textContent = label;
+          btn.disabled = !can;
+          btn.classList.toggle('cant', !can);
+        });
       });
     }
     if (activeTab === 'upgrades'){
