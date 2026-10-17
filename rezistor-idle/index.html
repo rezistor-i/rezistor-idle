@@ -859,8 +859,13 @@ function fmtShort(d){
   if (d.m === 0) return '0';
   if (d.e < 3) {
     const num = d.m * Math.pow(10, d.e);
-    if (num < 0.01) return num.toFixed(3).replace(/\.?0+$/, '');
-    return num.toFixed(num < 100 ? 2 : 0).replace(/\.?0+$/, '');
+    let s;
+    if (num < 0.01) s = num.toFixed(3);
+    else s = num.toFixed(num < 100 ? 2 : 0);
+    if (s.indexOf('.') >= 0){
+      s = s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    }
+    return s;
   }
   let tier = Math.floor(d.e / 3);
   let m = d.m;
@@ -1849,7 +1854,7 @@ function buyUpgrade(id){
   const u = UPGRADES.find(x => x.id === id);
   if (!u || isUpgradeMaxed(u)) return;
   const cost = upgradeCost(u);
-  if (state.money.lt(cost)){ toast('Недостаточно денег', 'event'); SoundManager.play('error'); return; }
+  if (state.money.lt(cost)) return;
   state.money = state.money.sub(cost);
   state.upgrades[id] = (state.upgrades[id] || 0) + 1;
   state.totalPurchases = (state.totalPurchases || 0) + 1;
@@ -2091,16 +2096,33 @@ function renderUpgrades(){
     const can = !maxed && state.money.gte(cost);
     const isNew = can && lvl === 0 && !state._seenUpgrades?.[u.id];
     const cls = (maxed ? 'bought' : (can ? '' : 'disabled')) + (isNew ? ' is-new' : '');
+    const badgeLabel = maxed ? 'MAX' : (lvl > 0 ? `${lvl}/${u.maxLevel}` : '');
+    const badgeHtml = badgeLabel
+      ? `<span style="position:absolute;top:8px;right:8px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:${maxed ? 'linear-gradient(180deg,#ffd98f,#c69a35)' : 'linear-gradient(180deg,#8ecbff,#5b9fd6)'};color:${maxed ? '#231601' : '#0a1722'};letter-spacing:.04em;z-index:2">${badgeLabel}</span>`
+      : '';
     return `<div class="upg-card ${cls}" data-upg="${u.id}">
-      ${maxed ? '<div class="upg-badge max">MAX</div>' : (lvl > 0 ? `<div class="upg-badge">${lvl}/${u.maxLevel}</div>` : '')}
-      <div class="upg-head"><span class="upg-ico">${u.icon}</span><span class="upg-name">${u.name}</span></div>
+      ${badgeHtml}
+      <div class="upg-head"><span class="upg-ico">${u.icon}</span><span class="upg-name" style="padding-right:${badgeLabel ? '44px' : '0'}">${u.name}</span></div>
       <div class="upg-desc">${u.desc}</div>
-      <div class="upg-foot"><span class="upg-cost ${can || maxed ? '' : 'cant'}">${maxed ? 'МАКС' : fmt(cost) + ' ₽'}</span><span class="upg-level">${lvl}/${u.maxLevel}</span></div>
+      <div class="upg-foot">
+        <span class="upg-cost ${can || maxed ? '' : 'cant'}">${maxed ? 'МАКС' : fmt(cost) + ' ₽'}</span>
+        <span class="upg-level">${lvl}/${u.maxLevel}</span>
+      </div>
     </div>`;
   }).join('');
   $('tab-upgrades').innerHTML = `<div class="cat-tabs">${catNav}</div><div class="grid grid-3">${rows}</div>`;
   $('tab-upgrades').querySelectorAll('[data-cat]').forEach(b => b.onclick = () => { activeCatTab = b.dataset.cat; SoundManager.play('click'); render(); });
-  $('tab-upgrades').querySelectorAll('[data-upg]').forEach(b => b.onclick = () => buyUpgrade(b.dataset.upg));
+  $('tab-upgrades').querySelectorAll('[data-upg]').forEach(b => {
+    b.onclick = () => {
+      const id = b.dataset.upg;
+      const u = UPGRADES.find(x => x.id === id);
+      if (!u) return;
+      if (isUpgradeMaxed(u)) return;
+      const cost = upgradeCost(u);
+      if (!state.money.gte(cost)){ SoundManager.play('error'); return; }
+      buyUpgrade(id);
+    };
+  });
 }
 function renderCodex(){
   const subNav = `
@@ -2396,7 +2418,23 @@ function uiUpdateLoop(t){
       STAFF.forEach(st => {
         const btn = document.querySelector(`[data-staff="${st.id}"]`); if (!btn) return;
         const cost = staffCost(st);
-        btn.textContent = fmt(cost) + ' ₽'; btn.disabled = state.money.lt(cost); btn.classList.toggle('cant', state.money.lt(cost));
+        btn.textContent = fmt(cost) + ' ₽';
+        btn.disabled = state.money.lt(cost);
+        btn.classList.toggle('cant', state.money.lt(cost));
+      });
+    }
+    if (activeTab === 'upgrades'){
+      UPGRADES.filter(u => u.cat === activeCatTab).forEach(u => {
+        const el = document.querySelector(`[data-upg="${u.id}"]`); if (!el) return;
+        const maxed = isUpgradeMaxed(u);
+        const cost = upgradeCost(u);
+        const can = !maxed && state.money.gte(cost);
+        const costEl = el.querySelector('.upg-cost');
+        if (costEl){
+          costEl.textContent = maxed ? 'МАКС' : fmt(cost) + ' ₽';
+          costEl.classList.toggle('cant', !can && !maxed);
+        }
+        el.classList.toggle('disabled', !can && !maxed);
       });
     }
   }
