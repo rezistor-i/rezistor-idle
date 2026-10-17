@@ -808,12 +808,9 @@ p{margin:6px 0}
 class Decimal {
   constructor(mantissa, exponent){
     if (mantissa && typeof mantissa === 'object' && 'm' in mantissa){
-      this.m = mantissa.m;
-      this.e = mantissa.e;
+      this.m = mantissa.m; this.e = mantissa.e;
     } else {
-      this.m = mantissa || 0;
-      this.e = exponent || 0;
-      this.normalize();
+      this.m = mantissa || 0; this.e = exponent || 0; this.normalize();
     }
   }
   normalize(){
@@ -821,10 +818,7 @@ class Decimal {
     const sign = this.m < 0 ? -1 : 1;
     let abs = Math.abs(this.m);
     const exp = Math.floor(Math.log10(abs));
-    if (exp !== 0){
-      abs = abs / Math.pow(10, exp);
-      this.e = this.e + exp;
-    }
+    if (exp !== 0){ abs = abs / Math.pow(10, exp); this.e = this.e + exp; }
     this.m = sign * abs;
   }
   toNumber(){ return this.m === 0 ? 0 : this.m * Math.pow(10, this.e); }
@@ -836,7 +830,7 @@ class Decimal {
     if (diff > 17) return b.clone();
     return new Decimal(a.m + b.m * Math.pow(10, diff), a.e);
   }
-  sub(o){ o = o instanceof Decimal ? o : new Decimal(o); return this.add(o.clone().mul(-1)); }
+  sub(o){ return this.add((o instanceof Decimal ? o : new Decimal(o)).clone().mul(-1)); }
   mul(o){ o = o instanceof Decimal ? o : new Decimal(o); return new Decimal(this.m * o.m, this.e + o.e); }
   div(o){
     o = o instanceof Decimal ? o : new Decimal(o);
@@ -856,11 +850,6 @@ class Decimal {
   gte(o){ return !this.lt(o); }
   eq(o){ o = o instanceof Decimal ? o : new Decimal(o); return this.e === o.e && this.m === o.m; }
   valueOf(){ return this.toNumber(); }
-  toString(){
-    if (this.m === 0) return '0';
-    if (this.e >= 0 && this.e < 3) return String(Math.round(this.m * Math.pow(10, this.e)));
-    return fmtShort(this);
-  }
 }
 function dec(n){ return n instanceof Decimal ? n : new Decimal(n); }
 
@@ -894,21 +883,12 @@ function uid(){ return Math.random().toString(36).slice(2,10); }
 function today(){ return new Date().toISOString().slice(0,10); }
 
 /* ============================================================
-   SOUND MANAGER v6 — мягкие звуки
-   • Только sine/triangle
-   • Плавная атака 20мс (без щелчков)
-   • Lowpass фильтр 2800Гц (убирает резкость)
-   • Уровни выровнены (0.05–0.10)
-   • Анти-спам 80мс между одинаковыми звуками
+   SOUND MANAGER
    ============================================================ */
 const SoundManager = (function(){
-  let ctx = null;
-  let masterGain = null;
-  let enabled = true;
-  let volume = 0.5;
+  let ctx = null, masterGain = null, enabled = true, volume = 0.5;
   let lastPlay = {};
   const MIN_INTERVAL = 80;
-
   function ensureCtx(){
     if (ctx) return ctx;
     try {
@@ -921,19 +901,10 @@ const SoundManager = (function(){
     } catch(e){ ctx = null; }
     return ctx;
   }
-
   function unlock(){
     const c = ensureCtx();
     if (c && c.state === 'suspended') c.resume().catch(()=>{});
   }
-
-  /**
-   * @param {number} freq — частота в Гц
-   * @param {number} dur  — длительность в секундах
-   * @param {string} type — 'sine' | 'triangle' (остальное игнорируется)
-   * @param {number} gain — базовая громкость (0..1)
-   * @param {number|null} slideTo — плавное скольжение к этой частоте
-   */
   function tone(freq, dur, type, gain, slideTo){
     const c = ensureCtx();
     if (!c || !enabled || volume <= 0) return;
@@ -943,232 +914,110 @@ const SoundManager = (function(){
       const osc = c.createOscillator();
       const g = c.createGain();
       const filter = c.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = 2800;
-      filter.Q.value = 0.6;
-
-      osc.type = type;
-      osc.frequency.value = freq;
-      if (slideTo){
-        try { osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur); }
-        catch(e){ /* игнор */ }
-      }
-
+      filter.type = 'lowpass'; filter.frequency.value = 2800; filter.Q.value = 0.6;
+      osc.type = type; osc.frequency.value = freq;
+      if (slideTo){ try { osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur); } catch(e){} }
       const peak = Math.max(0.001, gain);
-      // Плавная атака и мягкий релиз — убирают «клик» на старте/конце
       g.gain.setValueAtTime(0.0001, t0);
       g.gain.linearRampToValueAtTime(peak, t0 + 0.02);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-
-      osc.connect(filter);
-      filter.connect(g);
-      g.connect(masterGain);
-      osc.start(t0);
-      osc.stop(t0 + dur + 0.02);
-    } catch(e){ /* игнор */ }
+      osc.connect(filter); filter.connect(g); g.connect(masterGain);
+      osc.start(t0); osc.stop(t0 + dur + 0.02);
+    } catch(e){}
   }
-
-  /** Проиграть последовательность нот [freq, dur, delay] */
   function notes(seq){
     for (const [freq, dur, delay, gain] of seq){
       setTimeout(() => tone(freq, dur, 'sine', gain || 0.07), delay || 0);
     }
   }
-
   function play(id){
     if (!enabled) return;
     const t = performance.now();
     if (lastPlay[id] && t - lastPlay[id] < MIN_INTERVAL) return;
     lastPlay[id] = t;
-
     switch(id){
-      case 'coin':
-        notes([[660, 0.10, 0, 0.075], [880, 0.14, 60, 0.070]]);
-        break;
-      case 'rep':
-        tone(780, 0.14, 'sine', 0.075);
-        break;
-      case 'parts':
-        tone(520, 0.10, 'triangle', 0.060);
-        break;
-      case 'xp':
-        notes([[880, 0.12, 0, 0.075], [1320, 0.22, 90, 0.065]]);
-        break;
-      case 'buy':
-        tone(520, 0.12, 'triangle', 0.075);
-        break;
-      case 'click':
-        tone(660, 0.05, 'sine', 0.035);
-        break;
-      case 'error':
-        tone(220, 0.22, 'triangle', 0.085, 165);
-        break;
-      case 'success':
-        notes([[660, 0.10, 0, 0.075], [880, 0.16, 70, 0.070]]);
-        break;
-      case 'achievement':
-        notes([[660, 0.10, 0, 0.070], [880, 0.10, 70, 0.070], [1180, 0.20, 140, 0.075]]);
-        break;
-      case 'event':
-        tone(520, 0.22, 'triangle', 0.075, 780);
-        break;
-      case 'prestige':
-        notes([[440, 0.28, 0, 0.085], [660, 0.28, 180, 0.085], [990, 0.40, 360, 0.080]]);
-        break;
-      case 'codex':
-        notes([[660, 0.10, 0, 0.070], [990, 0.18, 80, 0.070]]);
-        break;
-      case 'repair_ok':
-        tone(880, 0.08, 'sine', 0.055);
-        break;
-      case 'repair_err':
-        tone(260, 0.16, 'triangle', 0.075, 200);
-        break;
-      case 'daily':
-        notes([[660, 0.10, 0, 0.075], [880, 0.10, 90, 0.075], [1180, 0.20, 180, 0.080]]);
-        break;
-      case 'music_start':
-        tone(520, 0.10, 'sine', 0.060);
-        break;
+      case 'coin': notes([[660, 0.10, 0, 0.075], [880, 0.14, 60, 0.070]]); break;
+      case 'rep': tone(780, 0.14, 'sine', 0.075); break;
+      case 'parts': tone(520, 0.10, 'triangle', 0.060); break;
+      case 'xp': notes([[880, 0.12, 0, 0.075], [1320, 0.22, 90, 0.065]]); break;
+      case 'buy': tone(520, 0.12, 'triangle', 0.075); break;
+      case 'click': tone(660, 0.05, 'sine', 0.035); break;
+      case 'error': tone(220, 0.22, 'triangle', 0.085, 165); break;
+      case 'success': notes([[660, 0.10, 0, 0.075], [880, 0.16, 70, 0.070]]); break;
+      case 'achievement': notes([[660, 0.10, 0, 0.070], [880, 0.10, 70, 0.070], [1180, 0.20, 140, 0.075]]); break;
+      case 'event': tone(520, 0.22, 'triangle', 0.075, 780); break;
+      case 'prestige': notes([[440, 0.28, 0, 0.085], [660, 0.28, 180, 0.085], [990, 0.40, 360, 0.080]]); break;
+      case 'codex': notes([[660, 0.10, 0, 0.070], [990, 0.18, 80, 0.070]]); break;
+      case 'repair_ok': tone(880, 0.08, 'sine', 0.055); break;
+      case 'repair_err': tone(260, 0.16, 'triangle', 0.075, 200); break;
+      case 'daily': notes([[660, 0.10, 0, 0.075], [880, 0.10, 90, 0.075], [1180, 0.20, 180, 0.080]]); break;
+      case 'music_start': tone(520, 0.10, 'sine', 0.060); break;
     }
   }
-
   return {
-    play,
-    unlock,
+    play, unlock,
     setEnabled(v){ enabled = !!v; },
     setVolume(v){ volume = Math.max(0, Math.min(1, v)); if (masterGain) masterGain.gain.value = volume; },
     get enabled(){ return enabled; },
     get volume(){ return volume; }
   };
 })();
-
 document.addEventListener('click', () => SoundManager.unlock(), { once: true, passive: true });
 document.addEventListener('touchstart', () => SoundManager.unlock(), { once: true, passive: true });
 
 /* ============================================================
-   MUSIC MANAGER — фоновая музыка
-   Путь: assets/audio/workshop-theme.mp3
+   MUSIC MANAGER
    ============================================================ */
 const MusicManager = (function(){
   const MUSIC_PATH = 'assets/audio/workshop-theme.mp3';
-  let audio = null;
-  let playing = false;
-  let available = true;  // false, если файл не найден / ошибка загрузки
-  let enabled = false;   // настройка игрока
-  let volume = 0.22;     // 22% — умеренно тихо
-  let initDone = false;
-
+  let audio = null, playing = false, available = true, enabled = false, volume = 0.22;
   function ensure(){
     if (audio) return audio;
     if (!available) return null;
     try {
-      audio = new Audio();
-      audio.src = MUSIC_PATH;
-      audio.loop = true;
-      audio.preload = 'none';
-      audio.volume = volume;
-      audio.crossOrigin = 'anonymous';
+      audio = new Audio(); audio.src = MUSIC_PATH; audio.loop = true;
+      audio.preload = 'none'; audio.volume = volume; audio.crossOrigin = 'anonymous';
       audio.addEventListener('error', onError);
       audio.addEventListener('canplay', () => { available = true; });
-    } catch(e){
-      available = false;
-      audio = null;
-    }
+    } catch(e){ available = false; audio = null; }
     return audio;
   }
-
   function onError(){
-    available = false;
-    playing = false;
-    updateHeaderBtn();
-    // Только один раз сообщаем игроку
-    if (!onError._notified){
-      onError._notified = true;
-      if (enabled){
-        toast('🎵 Музыка недоступна — проверьте путь assets/audio/workshop-theme.mp3', 'event');
-      }
-    }
+    available = false; playing = false; updateHeaderBtn();
+    if (!onError._notified){ onError._notified = true; if (enabled) toast('🎵 Музыка недоступна', 'event'); }
   }
-
   function updateHeaderBtn(){
     const btn = document.getElementById('music-btn');
     if (!btn) return;
     const icon = document.getElementById('music-btn-icon');
     const label = document.getElementById('music-btn-label');
-    if (!btn || !icon || !label) return;
-
-    if (!available){
-      btn.classList.add('hidden');
-      return;
-    }
+    if (!available){ btn.classList.add('hidden'); return; }
     btn.classList.remove('hidden');
-    if (playing){
-      btn.classList.add('playing');
-      icon.textContent = '🔊';
-      label.textContent = 'Играет';
-    } else {
-      btn.classList.remove('playing');
-      icon.textContent = '🎵';
-      label.textContent = 'Музыка';
-    }
+    if (playing){ btn.classList.add('playing'); icon.textContent = '🔊'; label.textContent = 'Играет'; }
+    else { btn.classList.remove('playing'); icon.textContent = '🎵'; label.textContent = 'Музыка'; }
   }
-
   async function play(){
     if (!enabled) return;
-    const a = ensure();
-    if (!a) return;
-    try {
-      await a.play();
-      playing = true;
-    } catch(e){
-      // NotAllowedError — автоплей заблокирован, ждём gesture
-      if (e && e.name === 'NotAllowedError'){
-        playing = false;
-      } else {
-        available = false;
-        playing = false;
-      }
+    const a = ensure(); if (!a) return;
+    try { await a.play(); playing = true; }
+    catch(e){
+      if (e && e.name === 'NotAllowedError'){ playing = false; }
+      else { available = false; playing = false; }
     }
     updateHeaderBtn();
   }
-
   function pause(){
     if (!audio) { playing = false; updateHeaderBtn(); return; }
     try { audio.pause(); } catch(e){}
-    playing = false;
-    updateHeaderBtn();
+    playing = false; updateHeaderBtn();
   }
-
-  function setVolume(v){
-    volume = Math.max(0, Math.min(1, v));
-    if (audio) audio.volume = volume;
-  }
-
-  function setEnabled(v){
-    enabled = !!v;
-    if (enabled){
-      // Требует user gesture для запуска
-      play();
-    } else {
-      pause();
-    }
-    updateHeaderBtn();
-  }
-
-  function toggle(){
-    if (!available){ toast('🎵 Музыка недоступна', 'event'); return; }
-    setEnabled(!enabled);
-  }
-
+  function setVolume(v){ volume = Math.max(0, Math.min(1, v)); if (audio) audio.volume = volume; }
+  function setEnabled(v){ enabled = !!v; if (enabled) play(); else pause(); updateHeaderBtn(); }
+  function toggle(){ if (!available){ toast('🎵 Музыка недоступна', 'event'); return; } setEnabled(!enabled); }
   return {
-    play, pause, toggle, setEnabled, setVolume,
-    get playing(){ return playing; },
-    get available(){ return available; },
-    get enabled(){ return enabled; },
-    get volume(){ return volume; },
-    updateHeaderBtn,
-    _initDone(){ initDone = true; }
+    play, pause, toggle, setEnabled, setVolume, updateHeaderBtn,
+    get playing(){ return playing; }, get available(){ return available; },
+    get enabled(){ return enabled; }, get volume(){ return volume; }
   };
 })();
 
@@ -1190,7 +1039,7 @@ const STAFF_COST_MULT = 1.15;
 const UPGRADES = [
   { id:'scr',   cat:'tools', name:'Точные отвёртки',         icon:'🪛', cost:300,       costMult:1.5, maxLevel:5,  desc:'+8% к доходу за уровень' },
   { id:'multi', cat:'tools', name:'Мультиметр',              icon:'📏', cost:1500,      costMult:1.6, maxLevel:5,  desc:'+10% доход. Открывает мультитест' },
-  { id:'solder',cat:'tools', name:'Паяльная станция',        icon:'🔥', cost:9000,      costMult:1.7, maxLevel:5,  desc:'+15% доход' },
+  { id:'solder',cat:'tools', name:'Паяльная станция',        icon:'🔥', cost:9000,      costMult:1.7, maxLevel:5,  desc:'+15% доход. Открывает полное восстановление' },
   { id:'scope', cat:'tools', name:'Осциллограф',             icon:'📺', cost:70000,     costMult:1.8, maxLevel:5,  desc:'+20% доход' },
   { id:'ir',    cat:'tools', name:'ИК-станция',              icon:'🌡️', cost:8e5,       costMult:1.9, maxLevel:5,  desc:'+25% доход' },
   { id:'micro', cat:'tools', name:'Микроскоп',               icon:'🔬', cost:1e7,       costMult:2.0, maxLevel:5,  desc:'+30% доход' },
@@ -1219,10 +1068,10 @@ const UPGRADES = [
   { id:'dim',   cat:'research', name:'Межмерное хранилище',  icon:'🌀', cost:2.5e12,    costMult:2.5, maxLevel:5,  desc:'×2 к оффлайн-доходу' },
 ];
 const CATEGORIES = {
-  tools:     { name:'Инструменты',  icon:'🛠️' },
-  facility:  { name:'Помещение',    icon:'🏢' },
-  marketing: { name:'Маркетинг',    icon:'📢' },
-  research:  { name:'Исследования', icon:'🧪' },
+  tools: { name:'Инструменты', icon:'🛠️' },
+  facility: { name:'Помещение', icon:'🏢' },
+  marketing: { name:'Маркетинг', icon:'📢' },
+  research: { name:'Исследования', icon:'🧪' },
 };
 
 const PRESTIGE_UPGRADES = [
@@ -1239,82 +1088,43 @@ const PRESTIGE_UPGRADES = [
   { id:'p_pre',    name:'Наследие',            icon:'🏆', cost:50, maxLevel:10, desc:'+10% к получаемым 💎' },
 ];
 
+const REPAIR_STRATEGIES = [
+  { id:'fast', name:'Быстрая замена', icon:'⚡', desc:'Заменить сломанный узел на новый. Быстро, но расходует запчасть.',
+    time:'1 шаг', partsCost:1, rewardMult:1.0, repMult:1.0, riskChance:0, riskPenalty:1.0,
+    unlock:()=>true, unlockDesc:'Доступно всегда', riskLabel:'Без риска', color:'var(--blue)' },
+  { id:'quality', name:'Качественный ремонт', icon:'🔧', desc:'Восстановить узел с проверкой. Надёжнее, но дольше.',
+    time:'2 шага', partsCost:0, rewardMult:1.5, repMult:1.3, riskChance:0.15, riskPenalty:0.5,
+    unlock:(s)=>s.totalOrders>=3, unlockDesc:'Откроется после 3 заказов', riskLabel:'Риск 15% · половина награды', color:'var(--green)' },
+  { id:'restore', name:'Полное восстановление', icon:'🛠️', desc:'Разбор, чистка, замена мелочей. Максимум качества.',
+    time:'3 шага', partsCost:2, rewardMult:2.2, repMult:2.0, riskChance:0.30, riskPenalty:0.3,
+    unlock:(s)=>s.totalOrders>=10 && (s.upgrades.solder||0)>=1, unlockDesc:'Нужно 10 заказов + паяльная станция', riskLabel:'Риск 30% · 30% награды', color:'var(--violet)' },
+  { id:'salvage', name:'Разбор на запчасти', icon:'🔩', desc:'Разобрать устройство на детали. Мгновенно, но клиент недоволен.',
+    time:'мгновенно', partsCost:-5, rewardMult:0.3, repMult:-0.5, riskChance:0, riskPenalty:1.0,
+    unlock:()=>true, unlockDesc:'Доступно всегда', riskLabel:'Штраф к репутации · −50% реп', color:'var(--orange)' }
+];
+
 const RARITY_COEF = { common:1, uncommon:2.5, rare:6, epic:15, legendary:40 };
 const RARITY_LABEL = { common:'Обычная', uncommon:'Необычная', rare:'Редкая', epic:'Эпическая', legendary:'Легендарная' };
 
 const FAULTS = {
-  psu_dead:{name:'Сгоревший БП',icon:'🔌',rarity:'common',part:'Блок питания',
-    symptoms:['не включается','тишина при нажатии'],causes:'Скачок напряжения или износ.',
-    tests:{visual:'Внешне чист, следов гари нет.',mult:'На выходе 0 В, дежурка отсутствует.'},
-    fix:['Отключить питание','Заменить блок питания','Проверить запуск']},
-  cable:{name:'Повреждённый кабель',icon:'⚡',rarity:'common',part:'Кабель питания',
-    symptoms:['не включается','индикатор не горит'],causes:'Перегиб или обрыв жилы.',
-    tests:{visual:'У разъёма заметен перегиб.',mult:'Кабель не звонится.'},
-    fix:['Отключить питание','Заменить кабель','Проверить запуск']},
-  btn:{name:'Кнопка питания',icon:'🔘',rarity:'common',part:'Кнопка питания',
-    symptoms:['не включается','БП исправен'],causes:'Износ или плохой контакт.',
-    tests:{visual:'Разъём кнопки подключён неплотно.',mult:'5 В есть, кнопка не замыкает.'},
-    fix:['Отключить питание','Проверить контакт','Проверить запуск']},
-  dust:{name:'Пыль в кулере',icon:'🌀',rarity:'common',part:'Кулер',
-    symptoms:['шумит','горячий корпус'],causes:'Пыль на лопастях.',
-    tests:{visual:'Радиатор забит пылью.',mult:'Питание в норме.'},
-    fix:['Отключить питание','Очистить пыль','Проверить запуск']},
-  overheat:{name:'Высохшая термопаста',icon:'🌡️',rarity:'uncommon',part:'Термоинтерфейс',
-    symptoms:['выключается в нагрузке','шумит'],causes:'Паста потеряла свойства.',
-    tests:{visual:'Следы засохшей пасты.',mult:'Температура 96°C за 5 минут.'},
-    fix:['Отключить питание','Снять кулер','Заменить термопасту','Установить кулер','Проверить нагрузкой']},
-  ram:{name:'Битый модуль ОЗУ',icon:'🧠',rarity:'uncommon',part:'ОЗУ',
-    symptoms:['синий экран','перезагрузки'],causes:'Деградация чипа памяти.',
-    tests:{visual:'Модуль повреждён визуально.',mult:'MemTest: ошибки при обращении.'},
-    fix:['Отключить питание','Проверить модули по одному','Заменить битый','Проверить систему']},
-  disk:{name:'Изношенный HDD',icon:'💾',rarity:'uncommon',part:'Жёсткий диск',
-    symptoms:['тормозит','файлы не открываются'],causes:'Сыпется поверхность.',
-    tests:{visual:'Посторонний шум при работе.',mult:'SMART: 240 переназначенных секторов.'},
-    fix:['Сохранить данные','Проверить SMART','Заменить диск','Проверить систему']},
-  psu_load:{name:'Просадка БП',icon:'⚙️',rarity:'uncommon',part:'Блок питания',
-    symptoms:['вылетает в игре','перезагрузки'],causes:'Мощности не хватает.',
-    tests:{visual:'Кабели подключены.',mult:'12В падает до 10.8В.'},
-    fix:['Отключить питание','Проверить кабели GPU','Заменить БП','Тест нагрузкой']},
-  caps:{name:'Вздутые конденсаторы',icon:'💥',rarity:'rare',part:'Материнская плата',
-    symptoms:['не включается','нестабильно'],causes:'Электролит вышел из строя.',
-    tests:{visual:'Конденсаторы с вздутой крышкой.',mult:'Пульсация питания +5В.'},
-    fix:['Отключить питание','Найти вздутые','Перепаять конденсаторы','Проверить запуск']},
-  bios:{name:'Сбитая прошивка BIOS',icon:'📟',rarity:'rare',part:'BIOS',
-    symptoms:['не грузится','чёрный экран'],causes:'Незавершённое обновление.',
-    tests:{visual:'Кулер вращается, экран чёрный.',mult:'POST не проходит.'},
-    fix:['Отключить питание','Взять программатор','Прошить BIOS','Проверить запуск']},
-  vrm:{name:'Повреждённые VRM',icon:'⚡',rarity:'rare',part:'Цепи питания CPU',
-    symptoms:['не стартует','треск при включении'],causes:'КЗ или выгорание.',
-    tests:{visual:'Следы нагрева на фазах.',mult:'Питание CPU не выходит.'},
-    fix:['Отключить питание','Найти пробитую фазу','Заменить VRM','Проверить нагрузкой']},
-  ssd_ctrl:{name:'Смерть контроллера SSD',icon:'🔲',rarity:'rare',part:'Контроллер SSD',
-    symptoms:['диск не определяется','зависает при загрузке'],causes:'Износ контроллера.',
-    tests:{visual:'Диск не определяется в BIOS.',mult:'Диск не отвечает на запросы.'},
-    fix:['Отключить питание','Проверить подключение','Перепаять контроллер','Восстановить данные']},
-  bga:{name:'Отвал чипа BGA',icon:'🎛️',rarity:'epic',part:'Видеочип или мост',
-    symptoms:['артефакты','чёрный экран'],causes:'Микротрещины в шариках припоя.',
-    tests:{visual:'Прогрев чипа меняет поведение.',mult:'Ошибки в цепях видеопамяти.'},
-    fix:['Отключить питание','Подготовить BGA-станцию','Снять чип','Накатать шарики','Установить чип','Проверить нагрузкой']},
-  trace:{name:'Разрыв дорожек',icon:'🕸️',rarity:'epic',part:'Печатная плата',
-    symptoms:['нет питания на узле','нестабильно'],causes:'Механическое повреждение.',
-    tests:{visual:'Микроскоп показывает разрыв.',mult:'КЗ или обрыв на линии.'},
-    fix:['Отключить питание','Найти разрыв','Пропаять дорожку','Защитить лаком','Проверить систему']},
-  liquid:{name:'Залитая плата',icon:'💧',rarity:'epic',part:'Материнская плата',
-    symptoms:['не включается после залития','коррозия'],causes:'Жидкость вызвала КЗ.',
-    tests:{visual:'Следы коррозии на элементах.',mult:'КЗ по шине питания.'},
-    fix:['Отключить питание','Разобрать плату','Ультразвуковая очистка','Просушить','Заменить повреждённые элементы','Проверить запуск']},
-  cpu_die:{name:'Умирающий CPU',icon:'🧊',rarity:'legendary',part:'Процессор',
-    symptoms:['ребуты в стресс-тесте','синие экраны'],causes:'Деградация кристалла.',
-    tests:{visual:'Следов износа нет.',mult:'Ошибки в стресс-тесте при 80°C.'},
-    fix:['Отключить питание','Тест стабильности','Заменить процессор','Обновить BIOS','Проверить нагрузкой']},
-  gpu_die:{name:'Умирающий видеочип',icon:'🎮',rarity:'legendary',part:'Видеокарта',
-    symptoms:['артефакты','рандомные падения драйвера'],causes:'Деградация GPU.',
-    tests:{visual:'Артефакты в 3DMark.',mult:'Ошибки в VRAM, температура чипа растёт.'},
-    fix:['Отключить питание','Тест VRAM','Перепайка памяти','Замена GPU','Тест нагрузкой']},
-  legend:{name:'Легендарный ремонт',icon:'🏆',rarity:'legendary',part:'Комплексная диагностика',
-    symptoms:['всё сломалось сразу'],causes:'Многофакторный случай.',
-    tests:{visual:'Следы стресса во многих узлах.',mult:'Все тесты показывают проблемы.'},
-    fix:['Полная разборка','Диагностика узлов','Ремонт каждого','Сборка','Длительный стресс-тест']},
+  psu_dead:{name:'Сгоревший БП',icon:'🔌',rarity:'common',part:'Блок питания', symptoms:['не включается','тишина'], causes:'Скачок напряжения.', tests:{visual:'Внешне чист.',mult:'0 В на выходе.'}, fix:['Отключить питание','Заменить блок питания','Проверить запуск']},
+  cable:{name:'Повреждённый кабель',icon:'⚡',rarity:'common',part:'Кабель', symptoms:['не включается','индикатор не горит'], causes:'Обрыв жилы.', tests:{visual:'Перегиб.',mult:'Кабель не звонится.'}, fix:['Отключить питание','Заменить кабель','Проверить запуск']},
+  btn:{name:'Кнопка питания',icon:'🔘',rarity:'common',part:'Кнопка', symptoms:['не включается','БП исправен'], causes:'Износ.', tests:{visual:'Неплотный контакт.',mult:'5 В есть, не замыкает.'}, fix:['Отключить питание','Проверить контакт','Проверить запуск']},
+  dust:{name:'Пыль в кулере',icon:'🌀',rarity:'common',part:'Кулер', symptoms:['шумит','горячий'], causes:'Пыль.', tests:{visual:'Забит пылью.',mult:'Питание в норме.'}, fix:['Отключить питание','Очистить пыль','Проверить запуск']},
+  overheat:{name:'Высохшая термопаста',icon:'🌡️',rarity:'uncommon',part:'Термоинтерфейс', symptoms:['выключается','шумит'], causes:'Паста потеряла свойства.', tests:{visual:'Засохшая паста.',mult:'Температура 96°C.'}, fix:['Отключить питание','Снять кулер','Заменить термопасту','Установить']},
+  ram:{name:'Битый модуль ОЗУ',icon:'🧠',rarity:'uncommon',part:'ОЗУ', symptoms:['синий экран','перезагрузки'], causes:'Деградация.', tests:{visual:'Повреждён.',mult:'MemTest: ошибки.'}, fix:['Отключить питание','Проверить модули','Заменить битый','Проверить систему']},
+  disk:{name:'Изношенный HDD',icon:'💾',rarity:'uncommon',part:'Жёсткий диск', symptoms:['тормозит','файлы не открываются'], causes:'Сыпется.', tests:{visual:'Шум.',mult:'SMART: 240 секторов.'}, fix:['Сохранить данные','Проверить SMART','Заменить диск','Проверить систему']},
+  psu_load:{name:'Просадка БП',icon:'⚙️',rarity:'uncommon',part:'Блок питания', symptoms:['вылетает','перезагрузки'], causes:'Мощности не хватает.', tests:{visual:'Кабели ок.',mult:'12В падает до 10.8В.'}, fix:['Отключить питание','Проверить кабели','Заменить БП','Тест']},
+  caps:{name:'Вздутые конденсаторы',icon:'💥',rarity:'rare',part:'Материнская плата', symptoms:['не включается','нестабильно'], causes:'Электролит.', tests:{visual:'Вздутые.',mult:'Пульсация +5В.'}, fix:['Отключить питание','Найти вздутые','Перепаять','Проверить запуск']},
+  bios:{name:'Сбитая прошивка BIOS',icon:'📟',rarity:'rare',part:'BIOS', symptoms:['не грузится','чёрный экран'], causes:'Незавершённое обновление.', tests:{visual:'Чёрный экран.',mult:'POST не проходит.'}, fix:['Отключить питание','Взять программатор','Прошить BIOS','Проверить запуск']},
+  vrm:{name:'Повреждённые VRM',icon:'⚡',rarity:'rare',part:'Цепи питания', symptoms:['не стартует','треск'], causes:'КЗ.', tests:{visual:'Следы нагрева.',mult:'Питание CPU нет.'}, fix:['Отключить питание','Найти фазу','Заменить VRM','Проверить']},
+  ssd_ctrl:{name:'Смерть контроллера SSD',icon:'🔲',rarity:'rare',part:'Контроллер', symptoms:['не определяется','зависает'], causes:'Износ.', tests:{visual:'Не в BIOS.',mult:'Не отвечает.'}, fix:['Отключить питание','Проверить подключение','Перепаять','Восстановить']},
+  bga:{name:'Отвал чипа BGA',icon:'🎛️',rarity:'epic',part:'Видеочип', symptoms:['артефакты','чёрный экран'], causes:'Микротрещины.', tests:{visual:'Прогрев меняет.',mult:'Ошибки видеопамяти.'}, fix:['Отключить питание','BGA-станция','Снять чип','Накатать шарики','Установить']},
+  trace:{name:'Разрыв дорожек',icon:'🕸️',rarity:'epic',part:'Печатная плата', symptoms:['нет питания','нестабильно'], causes:'Повреждение.', tests:{visual:'Микроскоп.',mult:'Обрыв.'}, fix:['Отключить питание','Найти разрыв','Пропаять','Защитить лаком']},
+  liquid:{name:'Залитая плата',icon:'💧',rarity:'epic',part:'Материнская плата', symptoms:['не включается','коррозия'], causes:'Жидкость.', tests:{visual:'Коррозия.',mult:'КЗ.'}, fix:['Отключить питание','Разобрать','Ультразвук','Просушить','Заменить']},
+  cpu_die:{name:'Умирающий CPU',icon:'🧊',rarity:'legendary',part:'Процессор', symptoms:['ребуты','синие экраны'], causes:'Деградация.', tests:{visual:'Норма.',mult:'Ошибки при 80°C.'}, fix:['Отключить питание','Тест стабильности','Заменить CPU','Обновить BIOS']},
+  gpu_die:{name:'Умирающий видеочип',icon:'🎮',rarity:'legendary',part:'Видеокарта', symptoms:['артефакты','падения'], causes:'Деградация.', tests:{visual:'Артефакты.',mult:'Ошибки VRAM.'}, fix:['Отключить питание','Тест VRAM','Перепайка','Замена GPU']},
+  legend:{name:'Легендарный ремонт',icon:'🏆',rarity:'legendary',part:'Комплекс', symptoms:['всё сломалось'], causes:'Многофакторный.', tests:{visual:'Стресс узлов.',mult:'Все тесты плохие.'}, fix:['Полная разборка','Диагностика','Ремонт каждого','Сборка','Стресс-тест']},
 };
 
 const CLIENTS = [
@@ -1358,9 +1168,12 @@ const ACHIEVEMENTS = [
   { id:'codex_5',     icon:'📚', name:'Первые знания',      desc:'Открой 5 неисправностей',         cond:s=>Object.keys(s.codex).length>=5 },
   { id:'codex_15',    icon:'📖', name:'Энциклопедия',       desc:'Открой 15 неисправностей',        cond:s=>Object.keys(s.codex).length>=15 },
   { id:'codex_all',   icon:'🧠', name:'Всезнающий',         desc:'Открой все неисправности',        cond:s=>Object.keys(s.codex).length>=Object.keys(FAULTS).length },
-  { id:'prestige_1',  icon:'💎', name:'Филиал №2',          desc:'Сделай первый престиж',           cond:s=>s.totalPrestiges>=1 },
-  { id:'prestige_10', icon:'💠', name:'Франшиза',           desc:'10 престижей',                    cond:s=>s.totalPrestiges>=10 },
-  { id:'prestige_100',icon:'🌌', name:'Империя',            desc:'100 престижей',                   cond:s=>s.totalPrestiges>=100 },
+  { id:'method_first',icon:'🔧', name:'Освоение',           desc:'Используй первый метод ремонта',  cond:s=>Object.keys(s.repairMethods||{}).length>=1 },
+  { id:'method_all',  icon:'🎖️', name:'Универсал',          desc:'Освой все методы ремонта',        cond:s=>Object.keys(s.repairMethods||{}).length>=REPAIR_STRATEGIES.length },
+  { id:'branch_1',    icon:'🚪', name:'Первый филиал',      desc:'Открой первый филиал',            cond:s=>s.totalPrestiges>=1 },
+  { id:'branch_5',    icon:'💠', name:'Сеть мастерских',    desc:'Открой 5 филиалов',               cond:s=>s.totalPrestiges>=5 },
+  { id:'branch_10',   icon:'🌌', name:'Франшиза',           desc:'Открой 10 филиалов',              cond:s=>s.totalPrestiges>=10 },
+  { id:'branch_25',   icon:'🏆', name:'Империя',            desc:'Открой 25 филиалов',              cond:s=>s.totalPrestiges>=25 },
   { id:'rep_100',     icon:'⭐', name:'Уважаемый',          desc:'100 репутации',                   cond:s=>s.totalRepEarned.gte(100) },
   { id:'rep_10k',     icon:'🌟', name:'Звезда города',      desc:'10K репутации',                   cond:s=>s.totalRepEarned.gte(10000) },
   { id:'parts_1k',    icon:'🔩', name:'Кладовщик',          desc:'Накопи 1000 запчастей',           cond:s=>s.spareParts.gte(1000) },
@@ -1371,16 +1184,14 @@ const ACHIEVEMENTS = [
   { id:'stage_2',     icon:'🚪', name:'Новое помещение',    desc:'Достигни 2 этапа',                 cond:s=>s.stage>=2 },
   { id:'stage_4',     icon:'🏢', name:'Серьёзный бизнес',   desc:'Достигни 4 этапа',                 cond:s=>s.stage>=4 },
   { id:'stage_6',     icon:'🏰', name:'Империя',            desc:'Достигни 6 этапа',                 cond:s=>s.stage>=6 },
+  { id:'empire_built',icon:'👑', name:'Построитель империи', desc:'Заверши сюжетную линию',          cond:s=>s.gameWon===true },
   { id:'ach_10',      icon:'🥉', name:'Коллекционер',       desc:'Открой 10 достижений',            cond:s=>Object.keys(s.achievements).length>=10 },
   { id:'ach_20',      icon:'🥈', name:'Перфекционист',      desc:'Открой 20 достижений',            cond:s=>Object.keys(s.achievements).length>=20 },
   { id:'ach_30',      icon:'🥇', name:'Завершённость',      desc:'Открой 30 достижений',            cond:s=>Object.keys(s.achievements).length>=30 },
   { id:'event_5',     icon:'🎲', name:'Свидетель',          desc:'Переживи 5 событий',              cond:s=>s.eventsSeen>=5 },
   { id:'offline_1h',  icon:'🌙', name:'Ночная смена',       desc:'Получи оффлайн-доход',            cond:s=>s.offlineEarningsTotal.gte(1) },
-  { id:'crit',        icon:'🎯', name:'Снайпер',            desc:'10 диагнозов с 1-й попытки',      cond:s=>s.perfectDiagnoses>=10 },
-  { id:'crit_100',    icon:'🎖️', name:'Ясновидец',         desc:'100 диагнозов с 1-й попытки',     cond:s=>s.perfectDiagnoses>=100 },
-  { id:'fast',        icon:'⏱️', name:'Быстрая рука',       desc:'Ремонт без ошибок',               cond:s=>s.perfectRepairs>=1 },
-  { id:'fast_50',     icon:'💨', name:'Автоматизм',         desc:'50 ремонтов без ошибок',          cond:s=>s.perfectRepairs>=50 },
-  { id:'parts_100k',  icon:'🏭', name:'Склад',              desc:'100K запчастей',                  cond:s=>s.spareParts.gte(100000) },
+  { id:'salvage_10',  icon:'🔩', name:'Барахольщик',        desc:'Разбери 10 устройств',            cond:s=>(s.repairMethods?.salvage?.count||0)>=10 },
+  { id:'restore_10',  icon:'🛠️', name:'Реставратор',        desc:'10 полных восстановлений',        cond:s=>(s.repairMethods?.restore?.count||0)>=10 },
   { id:'album_first', icon:'📗', name:'Первый альбом',      desc:'Собери первый альбом',            cond:s=>Object.values(s.albums).some(a=>a && a.complete) },
   { id:'album_all',   icon:'📚', name:'Полная коллекция',   desc:'Собери все альбомы',              cond:s=>ALBUMS.every(a=>s.albums[a.id] && s.albums[a.id].complete) },
   { id:'daily_7',     icon:'📅', name:'Неделя в строю',     desc:'7 дней подряд заходи в игру',      cond:s=>s.dailyStreak>=7 },
@@ -1400,13 +1211,22 @@ const EVENTS = [
 ];
 
 const STAGES = [
-  { id:1, name:'Гараж на окраине',    desc:'Старт одиночки',         unlockMoney:0 },
-  { id:2, name:'Мастерская «Резистор»',desc:'Первые клиенты',        unlockMoney:25000 },
-  { id:3, name:'По рекомендации',      desc:'Слава пошла',           unlockMoney:2.5e6 },
-  { id:4, name:'Профессиональный сервис',desc:'Юрлица, B2B',         unlockMoney:2.5e8 },
-  { id:5, name:'Известная мастерская', desc:'Мастера города',        unlockMoney:2.5e10 },
-  { id:6, name:'Мастерская мечты',     desc:'Империя',               unlockMoney:2.5e12 },
+  { id:1, name:'Гараж на окраине', desc:'Старт одиночки', unlockMoney:0 },
+  { id:2, name:'Мастерская «Резистор»', desc:'Первые клиенты', unlockMoney:25000 },
+  { id:3, name:'По рекомендации', desc:'Слава пошла', unlockMoney:2.5e6 },
+  { id:4, name:'Профессиональный сервис', desc:'Юрлица, B2B', unlockMoney:2.5e8 },
+  { id:5, name:'Известная мастерская', desc:'Мастера города', unlockMoney:2.5e10 },
+  { id:6, name:'Мастерская мечты', desc:'Империя', unlockMoney:2.5e12 },
 ];
+
+const STAGE_SCENES = {
+  1: { title: '🌱 Пролог', text: 'Вы открыли гараж. Первый клиент уже стучит в дверь. Пора доказать, что вы умеете чинить, а не просто менять детали наугад.' },
+  2: { title: '🚪 Первый рубеж', text: 'Сарафанное радио заработало. Соседи советуют вас друзьям, а в почте появляются письма от юрлиц. Пора расширяться.' },
+  3: { title: '🏢 Профессиональный сервис', text: 'Вы арендовали помещение. В городе появляется конкурент — Игорь, который переманивает клиентов демпингом. Придётся держать марку.' },
+  4: { title: '🏭 Сеть мастерских', text: 'Ваш бизнес растет. Игорь нервничает — его сеть трещит по швам. Вы нанимаете инженеров и покупаете дорогое оборудование.' },
+  5: { title: '⚠️ Встреча с прошлым', text: 'Игорь пришёл сам. Его сеть разорилась, и он просит о помощи. От вашего решения зависит его судьба.' },
+  6: { title: '🏆 Империя', text: 'Вы построили мастерскую мечты. Теперь это не просто гараж — это легенда. Но настоящий мастер не останавливается на достигнутом.' }
+};
 
 const DAILY_REWARDS = [
   { icon:'💰', money: 500,   parts: 5,  rep: 1 },
@@ -1421,35 +1241,30 @@ const DAILY_REWARDS = [
 /* ============================================================
    СОСТОЯНИЕ
    ============================================================ */
-const SAVE_KEY = 'rezistor_idle_v6';
+const SAVE_KEY = 'rezistor_idle_v8';
 const SAVE_SLOT_KEY = id => SAVE_KEY + '_slot_' + id;
-const LEGACY_KEYS = ['rezistor_idle_v5_slot_', 'rezistor_idle_v4_slot_'];
+const LEGACY_KEYS = ['rezistor_idle_v7_slot_', 'rezistor_idle_v6_slot_', 'rezistor_idle_v5_slot_', 'rezistor_idle_v4_slot_'];
 
 function defaultState(){
   return {
-    v: 6,
-    money: dec(25),
-    reputation: dec(0), spareParts: dec(0), xp: dec(0),
+    v: 8,
+    money: dec(25), reputation: dec(0), spareParts: dec(0), xp: dec(0),
     totalMoney: dec(25), totalRepEarned: dec(0), offlineEarningsTotal: dec(0),
     totalOrders: 0, totalFaultsFixed: 0, perfectDiagnoses: 0, perfectRepairs: 0,
     eventsSeen: 0, totalPurchases: 0,
     staff: {}, upgrades: {}, codex: {}, achievements: {}, prestigeUpgrades: {}, albums: {},
+    repairMethods: {},
+    seenStages: [],
+    igorChoice: null,
+    gameWon: false,
     _seenUpgrades: {},
     stage: 1,
-    currentOrder: null, diagnosis: null, repair: null,
+    currentOrder: null, diagnosis: null,
     lastTick: Date.now(), lastSave: Date.now(), startedAt: Date.now(),
     playTime: 0, totalPrestiges: 0,
     activeEvent: null,
     dailyDate: null, dailyStreak: 0, dailyClaimed: false,
-    settings: {
-      notation: 'short',
-      autosave: true,
-      sound: true,
-      volume: 0.5,
-      animations: true,
-      music: false,
-      musicVolume: 0.22,
-    },
+    settings: { notation: 'short', autosave: true, sound: true, volume: 0.5, animations: true, music: false, musicVolume: 0.22 },
     _incomeCache: 0,
     eventBonus: 1, eventDiscount: 1, eventOrderBoost: 1, eventPenalty: 1,
     _musicUsed: false,
@@ -1460,13 +1275,15 @@ function defaultState(){
 let state = null;
 let activeTab = 'workshop';
 let activeCatTab = 'tools';
+let activeCodexTab = 'faults';
 let lastUITick = 0;
 let rafId = null;
 let lastFrameTime = performance.now();
 let reducedMotion = false;
+let _prestigeInProgress = false;
 
 /* ============================================================
-   СЕРИАЛИЗАЦИЯ
+   СЕРИАЛИЗАЦИЯ И СОХРАНЕНИЕ
    ============================================================ */
 function serializeState(s){
   const plain = JSON.parse(JSON.stringify(s, (k, v) => {
@@ -1511,14 +1328,17 @@ function loadGame(slot){
     if (!merged.achievements) merged.achievements = {};
     if (!merged.prestigeUpgrades) merged.prestigeUpgrades = {};
     if (!merged.albums) merged.albums = {};
+    if (!merged.repairMethods) merged.repairMethods = {};
     if (!merged._seenUpgrades) merged._seenUpgrades = {};
+    if (!merged.seenStages) merged.seenStages = [];
     if (!merged.settings) merged.settings = {};
     if (merged.settings.sound === undefined) merged.settings.sound = true;
     if (merged.settings.volume === undefined) merged.settings.volume = 0.5;
     if (merged.settings.animations === undefined) merged.settings.animations = true;
     if (merged.settings.music === undefined) merged.settings.music = false;
     if (merged.settings.musicVolume === undefined) merged.settings.musicVolume = 0.22;
-    // МИГРАЦИЯ: стартовые 25 ₽
+    
+    // Миграция стартовых 25 ₽
     if ((merged.totalOrders || 0) === 0 && merged.money.lt(25)){
       merged.money = dec(25);
       if (merged.totalMoney.lt(25)) merged.totalMoney = dec(25);
@@ -1589,7 +1409,11 @@ function researchMultiplier(){
 }
 function prestigeIncomeMultiplier(){ return dec(1).add((state.prestigeUpgrades.p_income || 0) * 0.25); }
 function prestigeOrderMultiplier(){ return dec(1).add((state.prestigeUpgrades.p_order || 0) * 0.50); }
-function codexBonus(){ return dec(1).add(Object.keys(state.codex).length * 0.02); }
+function codexBonus(){
+  const faults = Object.keys(state.codex).length;
+  const methods = Object.keys(state.repairMethods || {}).length;
+  return dec(1).add(faults * 0.02 + methods * 0.01);
+}
 function albumBonus(){
   let sum = 0;
   for (const album of ALBUMS){
@@ -1600,39 +1424,45 @@ function albumBonus(){
 function totalIncome(){
   const staffSum = STAFF.reduce((sum, st) => sum.add(staffIncome(st)), dec(0));
   return staffSum
-    .mul(toolMultiplier())
-    .mul(facilityMultiplier())
-    .mul(researchMultiplier())
-    .mul(prestigeIncomeMultiplier())
-    .mul(codexBonus())
-    .mul(albumBonus())
-    .mul(state.eventBonus || 1)
-    .mul(state.eventPenalty || 1);
+    .mul(toolMultiplier()).mul(facilityMultiplier()).mul(researchMultiplier())
+    .mul(prestigeIncomeMultiplier()).mul(codexBonus()).mul(albumBonus())
+    .mul(state.eventBonus || 1).mul(state.eventPenalty || 1);
 }
 function orderFrequencyPerHour(){
   let base = dec(6);
   base = base.add(getUpgradeLevel('flyer') * 1);
   base = base.add(getUpgradeLevel('site') * 2);
   base = base.add(getUpgradeLevel('ads') * 5);
-  base = base.mul(marketingMultiplier()).mul(prestigeOrderMultiplier()).mul(state.eventOrderBoost || 1);
-  return base;
+  return base.mul(marketingMultiplier()).mul(prestigeOrderMultiplier()).mul(state.eventOrderBoost || 1);
 }
 
 /* ============================================================
    ПРЕСТИЖ
    ============================================================ */
-function prestigeXPGain(){
-  const mult = 1 + (state.prestigeUpgrades.p_pre || 0) * 0.10;
-  const total = state.totalMoney.toNumber();
-  if (!Number.isFinite(total) || total <= 1e6) return 0;
-  const base = total / 1e6;
-  const raw = Math.floor(Math.pow(base, 0.4));
-  const result = Math.floor(raw * mult);
-  return Number.isFinite(result) && result > 0 ? result : 0;
+function prestigeRewardXP(level){ return 5 + level * 5; }
+function prestigeRequirements(level){
+  const n = level + 1;
+  return { money: 1e5 * Math.pow(n, 2.5), orders: 5 * n, reputation: 10 * n, income: 1000 * n };
+}
+function checkPrestigeConditions(){
+  const level = state.totalPrestiges;
+  const req = prestigeRequirements(level);
+  const income = totalIncome().toNumber();
+  const conds = {
+    money: state.money.gte(req.money),
+    orders: state.totalOrders >= req.orders,
+    reputation: state.reputation.gte(req.reputation),
+    income: income >= req.income
+  };
+  const allMet = conds.money && conds.orders && conds.reputation && conds.income;
+  return { req, conds, allMet, reward: prestigeRewardXP(level), level, income };
 }
 function doPrestige(){
-  const gain = prestigeXPGain();
-  if (gain < 1){ toast('Слишком мало дохода для престижа', 'event'); return; }
+  if (_prestigeInProgress) return;
+  const check = checkPrestigeConditions();
+  if (!check.allMet){ toast('Условия для нового филиала не выполнены', 'event'); SoundManager.play('error'); return; }
+  _prestigeInProgress = true;
+  const gain = check.reward;
   const fresh = defaultState();
   fresh.xp = state.xp.add(gain);
   fresh.totalMoney = state.totalMoney;
@@ -1649,7 +1479,11 @@ function doPrestige(){
   fresh.codex = state.codex;
   fresh.albums = state.albums;
   fresh.prestigeUpgrades = state.prestigeUpgrades;
+  fresh.repairMethods = state.repairMethods;
   fresh._seenUpgrades = state._seenUpgrades;
+  fresh.seenStages = state.seenStages;
+  fresh.igorChoice = state.igorChoice;
+  fresh.gameWon = state.gameWon;
   fresh.startedAt = state.startedAt;
   fresh.playTime = state.playTime;
   fresh.settings = state.settings;
@@ -1663,8 +1497,9 @@ function doPrestige(){
   state = fresh;
   saveNow();
   SoundManager.play('prestige');
-  toast(`🏆 Филиал открыт! Получено 💎${gain}`, 'ach');
+  toast(`🏆 Филиал №${state.totalPrestiges} открыт! Получено 💎${gain}`, 'ach');
   render();
+  setTimeout(() => { _prestigeInProgress = false; }, 800);
 }
 function buyPrestigeUpgrade(id){
   const u = PRESTIGE_UPGRADES.find(x=>x.id===id);
@@ -1691,12 +1526,14 @@ function gameTick(dt){
   const earned = inc.mul(dt);
   state.money = state.money.add(earned);
   state.totalMoney = state.totalMoney.add(earned);
-  const stage = STAGES.find(s => state.money.gte(s.unlockMoney));
-  if (stage && stage.id > state.stage){
-    state.stage = stage.id;
-    SoundManager.play('success');
-    toast(`🎉 Новый этап: ${stage.name}`, 'ach');
+  
+  // Проверка нового этапа
+  const nextStage = STAGES.find(s => state.money.gte(s.unlockMoney) && s.id > state.stage);
+  if (nextStage){
+    state.stage = nextStage.id;
+    triggerStageTransition(state.stage);
   }
+
   if (state.activeEvent){
     if (now() >= state.activeEvent.expiresAt){
       const ev = EVENTS.find(e=>e.id === state.activeEvent.id);
@@ -1706,10 +1543,76 @@ function gameTick(dt){
   } else if (Math.random() < dt / 90){
     triggerRandomEvent();
   }
-  if (Math.random() < dt * 2){
-    checkAchievements();
+  if (Math.random() < dt * 2) checkAchievements();
+}
+
+function triggerStageTransition(stageId){
+  // Награда за этап
+  const inc = totalIncome();
+  const moneyReward = inc.mul(300); // 300 секунд дохода (5 минут)
+  const partsReward = 250;
+  const repReward = 50 * stageId;
+  
+  state.money = state.money.add(moneyReward);
+  state.totalMoney = state.totalMoney.add(moneyReward);
+  state.spareParts = state.spareParts.add(partsReward);
+  state.reputation = state.reputation.add(repReward);
+  state.totalRepEarned = state.totalRepEarned.add(repReward);
+  
+  if (!state.seenStages.includes(stageId)) state.seenStages.push(stageId);
+  
+  saveNow();
+  SoundManager.play('success');
+  
+  // Если это переход на 6 этап (финал)
+  if (stageId === 6 && !state.gameWon){
+    state.gameWon = true;
+    // Сюжетный выбор с Игорем
+    const scene = STAGE_SCENES[6];
+    showModal(
+      scene.title,
+      `<p>${scene.text}</p>
+       <p style="margin-top:16px"><b>Игорь стоит у порога. Его сеть разорилась, и он просит о помощи. Что вы решите?</b></p>
+       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+         <button class="buy-btn" style="flex:1;min-width:140px" onclick="window._igorChoice('help')">🤝 Помочь</button>
+         <button class="buy-btn" style="flex:1;min-width:140px;border-color:rgba(255,120,120,.5);color:var(--red)" onclick="window._igorChoice('refuse')">🚪 Отказать</button>
+       </div>
+       <p class="muted small" style="margin-top:12px">Помощь даст +1000 ⭐ репутации, отказ — +10M ₽.</p>
+       <p class="muted small">🎁 Награда: +${fmt(moneyReward)} ₽, +${partsReward} 🔧, +${repReward} ⭐</p>`,
+      null, false
+    );
+    return;
+  }
+
+  // Обычный этап
+  const scene = STAGE_SCENES[stageId];
+  if (scene){
+    showModal(
+      scene.title,
+      `<p>${scene.text}</p>
+       <p style="margin-top:16px"><b>🎁 Награда:</b> +${fmt(moneyReward)} ₽, +${partsReward} 🔧, +${repReward} ⭐</p>
+       <p class="muted small">Открылись новые неисправности (этап ${stageId}). Цена заказов выросла.</p>`,
+      null, false
+    );
   }
 }
+
+window._igorChoice = function(choice){
+  state.igorChoice = choice;
+  if (choice === 'help'){
+    state.reputation = state.reputation.add(1000);
+    state.totalRepEarned = state.totalRepEarned.add(1000);
+    toast('🤝 Вы помогли Игорю. +1000 ⭐', 'ach');
+  } else {
+    state.money = state.money.add(1e7);
+    state.totalMoney = state.totalMoney.add(1e7);
+    toast('🚪 Вы отказали Игорю. +10M ₽', 'ach');
+  }
+  $('modal').classList.remove('show');
+  saveNow();
+  render();
+};
+
 function triggerRandomEvent(){
   if (state.activeEvent) return;
   const ev = choice(EVENTS);
@@ -1717,13 +1620,11 @@ function triggerRandomEvent(){
   if (ev.duration > 0){
     state.activeEvent = { id:ev.id, expiresAt: now() + ev.duration * 1000 };
     if (ev.apply) ev.apply(state);
-    SoundManager.play('event');
-    toast(`${ev.icon} ${ev.name}: ${ev.desc}`, 'event');
   } else {
     if (ev.apply) ev.apply(state);
-    SoundManager.play('event');
-    toast(`${ev.icon} ${ev.name}: ${ev.desc}`, 'event');
   }
+  SoundManager.play('event');
+  toast(`${ev.icon} ${ev.name}: ${ev.desc}`, 'event');
   saveNow();
 }
 function checkAchievements(){
@@ -1754,11 +1655,8 @@ function checkDaily(){
   const todayStr = today();
   if (state.dailyDate === todayStr) return;
   const y = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-  if (state.dailyDate === y){
-    state.dailyStreak = Math.min(state.dailyStreak + 1, 7);
-  } else {
-    state.dailyStreak = 1;
-  }
+  if (state.dailyDate === y) state.dailyStreak = Math.min(state.dailyStreak + 1, 7);
+  else state.dailyStreak = 1;
   state.dailyDate = todayStr;
   state.dailyClaimed = false;
   saveNow();
@@ -1780,7 +1678,7 @@ function claimDaily(){
 }
 
 /* ============================================================
-   ОФФЛАЙН-ПРОГРЕСС
+   ОФФЛАЙН
    ============================================================ */
 function processOffline(){
   if (state._firstRun) return;
@@ -1799,14 +1697,9 @@ function processOffline(){
   const wasCapped = elapsed > maxHours * 3600;
   setTimeout(() => {
     SoundManager.play('coin');
-    showModal(
-      '🌙 Пока вас не было',
-      `<p>Отсутствие: <b>${h}ч ${m}м</b>${wasCapped ? ` <span class="muted">(лимит оффлайн ${maxHours}ч)</span>` : ''}</p>
-       <p>Доход: <b class="good">+${fmt(earned)} ₽</b></p>
-       <p class="muted small">Источник: сотрудники (${fmt(inc)} ₽/сек)</p>`,
-      null,
-      false
-    );
+    showModal('🌙 Пока вас не было',
+      `<p>Отсутствие: <b>${h}ч ${m}м</b>${wasCapped ? ` <span class="muted">(лимит ${maxHours}ч)</span>` : ''}</p>
+       <p>Доход: <b class="good">+${fmt(earned)} ₽</b></p>`, null, false);
   }, 500);
 }
 
@@ -1815,11 +1708,8 @@ function processOffline(){
    ============================================================ */
 function pickRandomFault(){
   const allowed = {
-    1: ['common'],
-    2: ['common','uncommon'],
-    3: ['common','uncommon','rare'],
-    4: ['common','uncommon','rare','epic'],
-    5: ['common','uncommon','rare','epic'],
+    1: ['common'], 2: ['common','uncommon'], 3: ['common','uncommon','rare'],
+    4: ['common','uncommon','rare','epic'], 5: ['common','uncommon','rare','epic'],
     6: ['common','uncommon','rare','epic','legendary'],
   }[state.stage] || ['common'];
   const pool = Object.entries(FAULTS).filter(([id,f]) => allowed.includes(f.rarity));
@@ -1830,10 +1720,7 @@ function pickRandomFault(){
   });
   const totalW = weights.reduce((a,b)=>a+b,0);
   let r = Math.random() * totalW;
-  for (let i = 0; i < pool.length; i++){
-    r -= weights[i];
-    if (r <= 0) return pool[i][0];
-  }
+  for (let i = 0; i < pool.length; i++){ r -= weights[i]; if (r <= 0) return pool[i][0]; }
   return pool[0][0];
 }
 function createOrder(){
@@ -1845,41 +1732,28 @@ function createOrder(){
   const candidates = [faultId, ...wrongs].sort(() => Math.random() - 0.5);
   const rarityCoef = RARITY_COEF[fault.rarity] || 1;
   const baseReward = dec(50).mul(rarityCoef).mul(dec(1.8).pow(state.stage - 1)).mul(dec(1).add(getUpgradeLevel('mat')*0.30));
-  return {
-    id: uid(),
-    clientId: client.id,
-    faultId,
-    candidates,
-    reward: baseReward,
-    rep: Math.ceil(5 * rarityCoef),
-    tests: ['visual'].concat(getUpgradeLevel('multi') >= 1 ? ['mult'] : []),
-    created: now(),
-  };
+  return { id: uid(), clientId: client.id, faultId, candidates, reward: baseReward, rep: Math.ceil(5 * rarityCoef), tests: ['visual'].concat(getUpgradeLevel('multi') >= 1 ? ['mult'] : []), created: now() };
 }
 function takeOrder(){
   if (state.currentOrder){ toast('Сначала завершите текущий заказ'); return; }
   state.currentOrder = createOrder();
   state.diagnosis = { tests:[], verdict:null, confirmed:false, firstTry:true };
-  state.repair = { placed:[], mistakes:0, shuffled:null };
-  saveNow();
-  SoundManager.play('click');
-  toast('📋 Новый заказ принят');
-  render();
+  saveNow(); SoundManager.play('click'); toast('📋 Новый заказ принят'); render();
+}
+function declineOrder(){
+  if (!state.currentOrder) return;
+  state.currentOrder = null; state.diagnosis = null;
+  SoundManager.play('click'); saveNow(); render();
 }
 function runTest(testId){
   if (!state.currentOrder) return;
   if (!state.diagnosis.tests.includes(testId)) state.diagnosis.tests.push(testId);
-  saveNow();
-  SoundManager.play('click');
-  render();
+  saveNow(); SoundManager.play('click'); render();
 }
 function selectVerdict(faultId){
-  if (!state.diagnosis) return;
-  if (state.diagnosis.confirmed) return;
+  if (!state.diagnosis || state.diagnosis.confirmed) return;
   state.diagnosis.verdict = faultId;
-  saveNow();
-  SoundManager.play('click');
-  render();
+  saveNow(); SoundManager.play('click'); render();
 }
 function confirmDiagnosis(){
   if (!state.currentOrder || !state.diagnosis.verdict) return;
@@ -1889,9 +1763,7 @@ function confirmDiagnosis(){
     SoundManager.play('error');
     toast('❌ Неверный диагноз. Попробуйте ещё раз', 'event');
     state.diagnosis.verdict = null;
-    saveNow();
-    render();
-    return;
+    saveNow(); render(); return;
   }
   state.diagnosis.confirmed = true;
   const fid = state.currentOrder.faultId;
@@ -1900,14 +1772,9 @@ function confirmDiagnosis(){
     SoundManager.play('codex');
     toast(`📖 Открыта запись: ${FAULTS[fid].name}`, 'ach');
     updateAlbums(fid);
-  } else {
-    SoundManager.play('success');
-  }
-  if (state.diagnosis.firstTry){
-    state.perfectDiagnoses = (state.perfectDiagnoses || 0) + 1;
-  }
-  saveNow();
-  render();
+  } else { SoundManager.play('success'); }
+  if (state.diagnosis.firstTry) state.perfectDiagnoses = (state.perfectDiagnoses || 0) + 1;
+  saveNow(); render();
 }
 function updateAlbums(faultId){
   for (const album of ALBUMS){
@@ -1916,112 +1783,53 @@ function updateAlbums(faultId){
     const a = state.albums[album.id];
     if (!a.discovered.includes(faultId)) a.discovered.push(faultId);
     if (!a.complete && album.faults.every(f => state.codex[f])){
-      a.complete = true;
-      SoundManager.play('achievement');
+      a.complete = true; SoundManager.play('achievement');
       toast(`📚 Альбом собран: ${album.name}! ${album.rewards}`, 'ach');
     }
   }
 }
-function getRepairOptions(){
-  const fault = FAULTS[state.currentOrder.faultId];
-  const correct = fault.fix.map((text, i) => ({ text, index:i, correct:true }));
-  const wrongPool = [
-    'Сразу снять деталь, не отключая питание',
-    'Закрутить обратно, не проверив',
-    'Проверить запуск до сборки',
-    'Заменить деталь, не убедившись в причине',
-    'Сделать прогрев без защиты',
-  ];
-  const wrongs = wrongPool.slice(0, 3).map((text, i) => ({ text, index:'w'+i, correct:false }));
-  const all = [...correct, ...wrongs];
-  if (!state.repair.shuffled){
-    const copy = all.slice();
-    for (let i = copy.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      const tmp = copy[i]; copy[i] = copy[j]; copy[j] = tmp;
-    }
-    state.repair.shuffled = copy.map(x => x.index);
-  }
-  const map = {};
-  all.forEach(x => { map[String(x.index)] = x; });
-  return state.repair.shuffled.map(k => map[String(k)]).filter(Boolean);
+function isStrategyUnlocked(s){
+  try { return s.unlock(state); } catch(e){ return false; }
 }
-function doRepairAction(key){
-  if (!state.currentOrder || !state.diagnosis.confirmed) return;
-  const fault = FAULTS[state.currentOrder.faultId];
-  const expected = state.repair.placed.length;
-  const k = String(key).startsWith('w') ? key : Number(key);
-  if (k === expected){
-    state.repair.placed.push(expected);
-    saveNow();
-    SoundManager.play('repair_ok');
-    render();
-    if (state.repair.placed.length === fault.fix.length){
-      completeOrder();
-    }
-  } else {
-    state.repair.mistakes++;
-    SoundManager.play('repair_err');
-    toast('⚠ Неверный порядок. Подумайте о безопасности', 'event');
-    saveNow();
-    render();
+function chooseStrategy(strategyId){
+  if (!state.currentOrder || !state.diagnosis || !state.diagnosis.confirmed) return;
+  const s = REPAIR_STRATEGIES.find(x => x.id === strategyId);
+  if (!s) return;
+  if (!isStrategyUnlocked(s)){ toast('Метод ещё не открыт', 'event'); SoundManager.play('error'); return; }
+  if (s.partsCost > 0 && state.spareParts.lt(s.partsCost)){
+    toast(`Нужно ${s.partsCost} 🔧 — не хватает`, 'event');
+    SoundManager.play('error'); return;
   }
-}
-function completeOrder(){
-  const order = state.currentOrder;
-  const reward = order.reward;
-  const rep = order.rep;
-  const partsGained = 2 + getUpgradeLevel('syn') * 2 + (state.prestigeUpgrades.p_parts || 0) * 2;
-  const perfect = state.repair.mistakes === 0;
-  const perfectBonus = perfect ? 1.2 : 1.0;
-
-  state.money = state.money.add(reward.mul(perfectBonus));
-  state.totalMoney = state.totalMoney.add(reward.mul(perfectBonus));
-  state.reputation = state.reputation.add(rep);
-  state.totalRepEarned = state.totalRepEarned.add(rep);
-  state.spareParts = state.spareParts.add(partsGained);
+  const failed = Math.random() < s.riskChance;
+  const rewardMult = failed ? s.riskPenalty : 1.0;
+  const finalReward = state.currentOrder.reward.mul(s.rewardMult * rewardMult);
+  const finalRep = Math.round(state.currentOrder.rep * s.repMult * (failed ? 0.5 : 1));
+  const partsChange = -s.partsCost;
+  if (partsChange > 0) state.spareParts = state.spareParts.add(partsChange);
+  else if (partsChange < 0) state.spareParts = state.spareParts.sub(-partsChange);
+  state.money = state.money.add(finalReward);
+  state.totalMoney = state.totalMoney.add(finalReward);
+  state.reputation = state.reputation.add(Math.max(0, finalRep));
+  state.totalRepEarned = state.totalRepEarned.add(Math.max(0, finalRep));
   state.totalOrders++;
   state.totalFaultsFixed = (state.totalFaultsFixed || 0) + 1;
-  if (perfect) state.perfectRepairs = (state.perfectRepairs || 0) + 1;
-  if (state.codex[order.faultId]){
-    state.codex[order.faultId].count++;
+  if (!failed && s.riskChance === 0) state.perfectRepairs = (state.perfectRepairs || 0) + 1;
+  const fid = state.currentOrder.faultId;
+  if (state.codex[fid]) state.codex[fid].count++;
+  if (!state.repairMethods) state.repairMethods = {};
+  if (!state.repairMethods[s.id]){
+    state.repairMethods[s.id] = { discoveredAt: now(), count: 0 };
+    SoundManager.play('codex'); toast(`📖 Освоен метод: ${s.name}`, 'ach');
   }
-  state.currentOrder = null;
-  state.diagnosis = null;
-  state.repair = null;
-  saveNow();
-
-  SoundManager.play('coin');
-  floatTextAtCursor(`+${fmt(reward.mul(perfectBonus))} ₽`, 'var(--green)', $('res-money'));
-  setTimeout(() => {
-    SoundManager.play('rep');
-    floatTextAtCursor(`+${rep} ⭐`, 'var(--gold)', $('res-rep'));
-  }, 150);
-
-  if (perfect) toast('✅ Идеальный ремонт! +20% бонус', 'ach');
-  else toast('✅ Заказ выполнен');
-  render();
-}
-function floatTextAtCursor(text, color, targetEl){
-  if (state.settings.animations === false) return;
-  if (reducedMotion) return;
-  const el = document.createElement('div');
-  el.className = 'float-text';
-  el.textContent = text;
-  el.style.color = color;
-  let x, y;
-  if (targetEl){
-    const rect = targetEl.getBoundingClientRect();
-    x = rect.left + rect.width / 2;
-    y = rect.top - 8;
-  } else {
-    x = window.innerWidth / 2;
-    y = window.innerHeight / 2;
-  }
-  el.style.left = x + 'px';
-  el.style.top = y + 'px';
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1500);
+  state.repairMethods[s.id].count++;
+  SoundManager.play(failed ? 'repair_err' : 'coin');
+  floatTextAtCursor(`+${fmt(finalReward)} ₽`, 'var(--green)', $('res-money'));
+  if (finalRep > 0) setTimeout(() => { SoundManager.play('rep'); floatTextAtCursor(`+${finalRep} ⭐`, 'var(--gold)', $('res-rep')); }, 150);
+  if (partsChange !== 0) setTimeout(() => { SoundManager.play('parts'); floatTextAtCursor(`${partsChange > 0 ? '+' : ''}${partsChange} 🔧`, 'var(--cyan)', $('res-parts')); }, 300);
+  if (failed) toast(`⚠ ${s.name}: неудача. Получено ${fmt(finalReward)} ₽`, 'event');
+  else toast(`✅ ${s.name}: +${fmt(finalReward)} ₽, +${finalRep} ⭐`);
+  state.currentOrder = null; state.diagnosis = null;
+  saveNow(); render();
 }
 
 /* ============================================================
@@ -2035,14 +1843,11 @@ function buyStaff(id){
   state.money = state.money.sub(cost);
   state.staff[id] = (state.staff[id] || 0) + 1;
   state.totalPurchases = (state.totalPurchases || 0) + 1;
-  SoundManager.play('buy');
-  saveNow();
-  render();
+  SoundManager.play('buy'); saveNow(); render();
 }
 function buyUpgrade(id){
   const u = UPGRADES.find(x => x.id === id);
-  if (!u) return;
-  if (isUpgradeMaxed(u)) return;
+  if (!u || isUpgradeMaxed(u)) return;
   const cost = upgradeCost(u);
   if (state.money.lt(cost)){ toast('Недостаточно денег', 'event'); SoundManager.play('error'); return; }
   state.money = state.money.sub(cost);
@@ -2050,9 +1855,7 @@ function buyUpgrade(id){
   state.totalPurchases = (state.totalPurchases || 0) + 1;
   if (!state._seenUpgrades) state._seenUpgrades = {};
   state._seenUpgrades[id] = true;
-  SoundManager.play('buy');
-  saveNow();
-  render();
+  SoundManager.play('buy'); saveNow(); render();
 }
 
 /* ============================================================
@@ -2065,7 +1868,7 @@ const TABS = [
   { id:'codex',    name:'📖 Кодекс' },
   { id:'albums',   name:'📚 Альбомы' },
   { id:'quests',   name:'🎯 Этапы' },
-  { id:'prestige', name:'💎 Престиж',  badge: () => prestigeXPGain() >= 1 ? 1 : 0 },
+  { id:'prestige', name:'💎 Филиалы',  badge: () => checkPrestigeConditions().allMet ? 1 : 0 },
   { id:'stats',    name:'📊 Статистика' },
   { id:'settings', name:'⚙️ Настройки' },
 ];
@@ -2080,9 +1883,7 @@ function buildNav(){
       activeTab = b.dataset.tab;
       document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
       $('tab-' + activeTab).classList.add('active');
-      SoundManager.play('click');
-      buildNav();
-      render();
+      SoundManager.play('click'); buildNav(); render();
     };
   });
 }
@@ -2104,9 +1905,7 @@ function updateTopRes(){
         $('event-name').textContent = ev.name;
         $('event-timer').textContent = `${remaining}с`;
       }
-    } else {
-      evEl.classList.add('hidden');
-    }
+    } else { evEl.classList.add('hidden'); }
   }
 }
 function render(){
@@ -2138,9 +1937,7 @@ function renderWorkshop(){
       </div>
       <div style="text-align:right">
         <div class="staff-count">×${owned}</div>
-        <button class="buy-btn ${can ? '' : 'cant'}" data-staff="${st.id}" ${can ? '' : 'disabled'}>
-          ${fmt(cost)} ₽
-        </button>
+        <button class="buy-btn ${can ? '' : 'cant'}" data-staff="${st.id}" ${can ? '' : 'disabled'}>${fmt(cost)} ₽</button>
       </div>
     </div>`;
   }).join('');
@@ -2148,19 +1945,13 @@ function renderWorkshop(){
   const nextGoal = nextStage ? `До этапа ${nextStage.id}: ${fmt(nextStage.unlockMoney)} ₽` : 'Все этапы достигнуты!';
   const progress = nextStage ? clamp(state.money.div(nextStage.unlockMoney).toNumber(), 0, 1) : 1;
   const dailyHtml = state.dailyClaimed
-    ? `<div class="card" style="margin-bottom:14px;text-align:center">
-        <b>🎁 Ежедневная награда получена</b>
-        <p class="muted small">Возвращайтесь завтра! Серия: ${state.dailyStreak} дней</p>
-      </div>`
+    ? `<div class="card" style="margin-bottom:14px;text-align:center"><b>🎁 Ежедневная награда получена</b><p class="muted small">Возвращайтесь завтра! Серия: ${state.dailyStreak} дней</p></div>`
     : `<div class="card" style="margin-bottom:14px">
         <div class="section-title"><b>🎁 Ежедневная награда</b><span class="muted small">Серия: ${state.dailyStreak} дн.</span></div>
         <div class="daily-grid">${DAILY_REWARDS.map((r, i) => {
           const claimed = i < state.dailyStreak - 1;
           const todayDay = i === state.dailyStreak - 1;
-          return `<div class="daily-day ${claimed ? 'claimed' : ''} ${todayDay ? 'today' : ''}">
-            <span class="day-icon">${r.icon}</span>
-            <div>${i + 1}</div>
-          </div>`;
+          return `<div class="daily-day ${claimed ? 'claimed' : ''} ${todayDay ? 'today' : ''}"><span class="day-icon">${r.icon}</span><div>${i + 1}</div></div>`;
         }).join('')}</div>
         <button class="premium-btn" id="claim-daily" style="width:100%;margin-top:8px">Забрать награду дня ${state.dailyStreak}</button>
       </div>`;
@@ -2169,7 +1960,7 @@ function renderWorkshop(){
     <div class="income-hero">
       <div class="label">Доход в секунду</div>
       <div class="value">+${fmt(inc)} ₽</div>
-      <div class="sub">${state.activeEvent ? `🔥 Активно: ${(EVENTS.find(e=>e.id===state.activeEvent.id)||{}).name || ''}` : 'Спокойный день в мастерской'}</div>
+      <div class="sub">${state.activeEvent ? `🔥 Активно: ${(EVENTS.find(e=>e.id===state.activeEvent.id)||{}).name || ''}` : `Филиалов открыто: ${state.totalPrestiges}`}</div>
       <div class="bonuses">
         <span class="pill">🔧 Инструменты ×${fmtShort(toolMultiplier())}</span>
         <span class="pill">🏢 Помещение ×${fmtShort(facilityMultiplier())}</span>
@@ -2180,20 +1971,14 @@ function renderWorkshop(){
       </div>
     </div>
     <div class="card" style="margin-bottom:16px">
-      <div class="section-title">
-        <b>${nextGoal}</b>
-        <span class="muted small">${(progress*100).toFixed(1)}%</span>
-      </div>
+      <div class="section-title"><b>${nextGoal}</b><span class="muted small">${(progress*100).toFixed(1)}%</span></div>
       <div class="progress"><div style="transform:scaleX(${progress})"></div></div>
     </div>
     <h3>👥 Персонал мастерской</h3>
     <div class="grid grid-2" style="margin-top:10px">${staffRows}</div>
   `;
-  $('tab-workshop').querySelectorAll('[data-staff]').forEach(b => {
-    b.onclick = () => buyStaff(b.dataset.staff);
-  });
-  const claimBtn = $('claim-daily');
-  if (claimBtn) claimBtn.onclick = claimDaily;
+  $('tab-workshop').querySelectorAll('[data-staff]').forEach(b => b.onclick = () => buyStaff(b.dataset.staff));
+  const claimBtn = $('claim-daily'); if (claimBtn) claimBtn.onclick = claimDaily;
 }
 function renderOrders(){
   const tab = $('tab-orders');
@@ -2205,7 +1990,7 @@ function renderOrders(){
         <h2>Свободных заказов нет</h2>
         <p class="muted">Поток клиентов: ~${fmt(perH)} заказов в час</p>
         <button class="premium-btn" id="take-order" style="margin-top:16px">Взять следующий заказ</button>
-        <p class="muted small" style="margin-top:16px">Активные заказы дают в 10–20× больше, чем idle-доход за то же время</p>
+        <p class="muted small" style="margin-top:16px">Каждый заказ — выбор стратегии ремонта с разными наградами и рисками</p>
       </div>
     `;
     $('take-order').onclick = takeOrder;
@@ -2215,91 +2000,84 @@ function renderOrders(){
   const fault = FAULTS[order.faultId];
   const client = CLIENTS.find(c => c.id === order.clientId) || CLIENTS[0];
   const d = state.diagnosis;
-  const r = state.repair;
-  const testRows = order.tests.map(t => {
-    const done = d.tests.includes(t);
-    const label = t === 'visual' ? '🔎 Визуальный осмотр' : '⚡ Проверка мультиметром';
-    return `<button class="test-btn ${done ? 'done' : ''}" data-test="${t}" ${done ? 'disabled' : ''}>
-      ${label}${done ? ' ✓' : ''}
-    </button>`;
-  }).join('');
-  const testResults = d.tests.map(t => {
-    const txt = t === 'visual' ? fault.tests.visual : fault.tests.mult;
-    return `<div class="test-result"><b>${t === 'visual' ? 'Осмотр' : 'Мультиметр'}:</b> ${txt}</div>`;
-  }).join('');
-  const candidateBtns = order.candidates.map(cid => {
-    const cf = FAULTS[cid];
-    const selected = d.verdict === cid ? ' selected' : '';
-    return `<button class="choice-btn${selected}" data-verdict="${cid}" ${d.confirmed ? 'disabled' : ''}>
-      ${cf.icon} ${cf.name}
-    </button>`;
-  }).join('');
-  let repairSection = '';
   if (!d.confirmed){
-    repairSection = `<p class="muted">Сначала подтвердите диагноз.</p>`;
-  } else {
-    const opts = getRepairOptions();
-    const placedCount = r.placed.length;
-    const totalCount = fault.fix.length;
-    if (placedCount >= totalCount){
-      repairSection = `<p class="good"><b>✓ Все действия выполнены. Проверяем...</b></p>`;
-    } else {
-      repairSection = `
-        <p>Выберите следующее действие. <b>Порядок важен</b>.</p>
-        <div class="grid grid-2">
-          ${opts.map(o => {
-            const done = o.correct && r.placed.includes(o.index);
-            return `<button class="repair-btn ${done ? 'done' : ''}" data-rep="${o.index}" ${done ? 'disabled' : ''}>
-              ${done ? '✓ ' : ''}${o.text}
-            </button>`;
-          }).join('')}
+    const testRows = order.tests.map(t => {
+      const done = d.tests.includes(t);
+      const label = t === 'visual' ? '🔎 Визуальный осмотр' : '⚡ Проверка мультиметром';
+      return `<button class="test-btn ${done ? 'done' : ''}" data-test="${t}" ${done ? 'disabled' : ''}>${label}${done ? ' ✓' : ''}</button>`;
+    }).join('');
+    const testResults = d.tests.map(t => {
+      const txt = t === 'visual' ? fault.tests.visual : fault.tests.mult;
+      return `<div class="test-result"><b>${t === 'visual' ? 'Осмотр' : 'Мультиметр'}:</b> ${txt}</div>`;
+    }).join('');
+    const candidateBtns = order.candidates.map(cid => {
+      const cf = FAULTS[cid];
+      return `<button class="choice-btn${d.verdict === cid ? ' selected' : ''}" data-verdict="${cid}">${cf.icon} ${cf.name}</button>`;
+    }).join('');
+    tab.innerHTML = `
+      <div class="order-card">
+        <div class="client-row"><div class="client-av">${client.icon}</div><div><div class="client-name">${client.name}</div><div class="client-role">${client.role}</div></div></div>
+        <p><i>${client.line}</i></p>
+        <p><b>Жалоба:</b> ${fault.symptoms.join(', ')}</p>
+        <p>${fault.symptoms.map(s => `<span class="pill">${s}</span>`).join('')}</p>
+      </div>
+      <div class="grid grid-2">
+        <div class="card"><h3>🔍 Диагностика</h3><div style="margin-top:8px">${testRows}</div>${testResults}</div>
+        <div class="card"><h3>📝 Вердикт</h3><div style="margin-top:8px">${candidateBtns}</div>
+          <button class="premium-btn" id="confirm-diagnosis" style="margin-top:8px;width:100%" ${!d.verdict ? 'disabled' : ''}>Подтвердить диагноз</button>
+          <button class="buy-btn" id="decline-order" style="margin-top:8px;width:100%">Отказаться от заказа</button>
         </div>
-        <div class="progress" style="margin-top:12px"><div style="transform:scaleX(${placedCount / totalCount})"></div></div>
-        <div class="muted small">Выполнено: ${placedCount} / ${totalCount} · ошибок: ${r.mistakes}</div>
-      `;
-    }
+      </div>
+    `;
+    tab.querySelectorAll('[data-test]').forEach(b => b.onclick = () => runTest(b.dataset.test));
+    tab.querySelectorAll('[data-verdict]').forEach(b => b.onclick = () => selectVerdict(b.dataset.verdict));
+    const confirmBtn = $('confirm-diagnosis'); if (confirmBtn) confirmBtn.onclick = confirmDiagnosis;
+    const declineBtn = $('decline-order'); if (declineBtn) declineBtn.onclick = declineOrder;
+    return;
   }
+  const strategiesHtml = REPAIR_STRATEGIES.map(s => {
+    const unlocked = isStrategyUnlocked(s);
+    const canAfford = s.partsCost <= 0 || state.spareParts.gte(s.partsCost);
+    const enabled = unlocked && canAfford;
+    const known = state.repairMethods && state.repairMethods[s.id];
+    const rewardShow = state.currentOrder.reward.mul(s.rewardMult);
+    const repShow = Math.round(state.currentOrder.rep * s.repMult);
+    const partsLabel = s.partsCost > 0 ? `−${s.partsCost} 🔧` : (s.partsCost < 0 ? `+${-s.partsCost} 🔧` : '0 🔧');
+    const repLabel = repShow >= 0 ? `+${repShow} ⭐` : `${repShow} ⭐`;
+    const statusLabel = !unlocked ? `<span class="bad">🔒 ${s.unlockDesc}</span>` : (!canAfford ? `<span class="bad">Не хватает запчастей</span>` : `<span class="good">Готово</span>`);
+    const knownLabel = known ? `<span class="muted small">Освоено ${known.count}×</span>` : `<span class="small" style="color:var(--gold)">✦ Новый метод</span>`;
+    return `<div class="upg-card ${!enabled ? 'disabled' : ''}" data-strategy="${s.id}" style="${enabled ? '' : 'cursor:not-allowed'}">
+      <div class="upg-head"><span class="upg-ico">${s.icon}</span><span class="upg-name" style="color:${s.color}">${s.name}</span></div>
+      <div class="upg-desc">${s.desc}</div>
+      <div class="small muted" style="margin-bottom:6px">⏱ ${s.time} · ${partsLabel} · ${repLabel} · <span style="color:${s.riskChance>0?'var(--red)':'var(--green)'}">${s.riskLabel}</span></div>
+      <div class="upg-foot"><span class="upg-cost">≈${fmt(rewardShow)} ₽</span>${knownLabel}</div>
+      <div class="small" style="margin-top:6px">${statusLabel}</div>
+    </div>`;
+  }).join('');
   tab.innerHTML = `
     <div class="order-card">
-      <div class="client-row">
-        <div class="client-av">${client.icon}</div>
-        <div>
-          <div class="client-name">${client.name}</div>
-          <div class="client-role">${client.role}</div>
-        </div>
-      </div>
-      <p><i>${client.line}</i></p>
-      <p><b>Жалоба:</b> ${fault.symptoms.join(', ')}</p>
-      <p>${fault.symptoms.map(s => `<span class="pill">${s}</span>`).join('')}</p>
-      <p class="muted small">Оплата ~${fmt(order.reward)} ₽ · +${order.rep} ⭐ · +${2 + getUpgradeLevel('syn')*2 + (state.prestigeUpgrades.p_parts||0)*2} 🔧</p>
-    </div>
-    <div class="grid grid-2">
-      <div class="card">
-        <h3>🔍 Диагностика</h3>
-        <div style="margin-top:8px">${testRows}</div>
-        ${testResults}
-      </div>
-      <div class="card">
-        <h3>📝 Вердикт</h3>
-        <div style="margin-top:8px">${candidateBtns}</div>
-        <button class="premium-btn" id="confirm-diagnosis" style="margin-top:8px;width:100%" ${(!d.verdict || d.confirmed) ? 'disabled' : ''}>
-          ${d.confirmed ? '✓ Подтверждено' : 'Подтвердить диагноз'}
-        </button>
+      <div class="client-row"><div class="client-av">${client.icon}</div><div><div class="client-name">${client.name}</div><div class="client-role">${client.role}</div></div></div>
+      <p><b>Диагноз подтверждён:</b> ${fault.icon} ${fault.name}</p>
+      <p class="muted small">Выберите метод ремонта. Каждый влияет на награду, репутацию и расход запчастей.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <span class="pill">💰 ≈${fmt(state.currentOrder.reward)} ₽</span>
+        <span class="pill">⭐ +${state.currentOrder.rep}</span>
+        <span class="pill">🔧 в наличии: ${fmt(state.spareParts)}</span>
       </div>
     </div>
-    <div class="card" style="margin-top:12px">
-      <h3>🛠️ Ремонт</h3>
-      ${repairSection}
+    <div class="grid grid-2">${strategiesHtml}</div>
+    <div class="card" style="margin-top:12px;text-align:center">
+      <button class="buy-btn" id="decline-order" style="width:100%">Отказаться от заказа (без штрафа)</button>
     </div>
   `;
-  tab.querySelectorAll('[data-test]').forEach(b => b.onclick = () => runTest(b.dataset.test));
-  tab.querySelectorAll('[data-verdict]').forEach(b => b.onclick = () => selectVerdict(b.dataset.verdict));
-  tab.querySelectorAll('[data-rep]').forEach(b => b.onclick = () => {
-    const k = b.dataset.rep;
-    doRepairAction(k.startsWith('w') ? k : Number(k));
+  tab.querySelectorAll('[data-strategy]').forEach(el => {
+    const sid = el.dataset.strategy;
+    const s = REPAIR_STRATEGIES.find(x => x.id === sid);
+    if (!isStrategyUnlocked(s)) return;
+    if (s.partsCost > 0 && state.spareParts.lt(s.partsCost)) return;
+    el.onclick = () => chooseStrategy(sid);
   });
-  const confirmBtn = $('confirm-diagnosis');
-  if (confirmBtn) confirmBtn.onclick = confirmDiagnosis;
+  const declineBtn = $('decline-order'); if (declineBtn) declineBtn.onclick = declineOrder;
 }
 function renderUpgrades(){
   const catNav = Object.entries(CATEGORIES).map(([id, c]) =>
@@ -2315,105 +2093,81 @@ function renderUpgrades(){
     const cls = (maxed ? 'bought' : (can ? '' : 'disabled')) + (isNew ? ' is-new' : '');
     return `<div class="upg-card ${cls}" data-upg="${u.id}">
       ${maxed ? '<div class="upg-badge max">MAX</div>' : (lvl > 0 ? `<div class="upg-badge">${lvl}/${u.maxLevel}</div>` : '')}
-      <div class="upg-head">
-        <span class="upg-ico">${u.icon}</span>
-        <span class="upg-name">${u.name}</span>
-      </div>
+      <div class="upg-head"><span class="upg-ico">${u.icon}</span><span class="upg-name">${u.name}</span></div>
       <div class="upg-desc">${u.desc}</div>
-      <div class="upg-foot">
-        <span class="upg-cost ${can || maxed ? '' : 'cant'}">${maxed ? 'МАКС' : fmt(cost) + ' ₽'}</span>
-        <span class="upg-level">${lvl}/${u.maxLevel}</span>
-      </div>
+      <div class="upg-foot"><span class="upg-cost ${can || maxed ? '' : 'cant'}">${maxed ? 'МАКС' : fmt(cost) + ' ₽'}</span><span class="upg-level">${lvl}/${u.maxLevel}</span></div>
     </div>`;
   }).join('');
-  $('tab-upgrades').innerHTML = `
-    <div class="cat-tabs">${catNav}</div>
-    <div class="grid grid-3">${rows}</div>
-  `;
-  $('tab-upgrades').querySelectorAll('[data-cat]').forEach(b => {
-    b.onclick = () => { activeCatTab = b.dataset.cat; SoundManager.play('click'); render(); };
-  });
-  $('tab-upgrades').querySelectorAll('[data-upg]').forEach(b => {
-    b.onclick = () => buyUpgrade(b.dataset.upg);
-  });
+  $('tab-upgrades').innerHTML = `<div class="cat-tabs">${catNav}</div><div class="grid grid-3">${rows}</div>`;
+  $('tab-upgrades').querySelectorAll('[data-cat]').forEach(b => b.onclick = () => { activeCatTab = b.dataset.cat; SoundManager.play('click'); render(); });
+  $('tab-upgrades').querySelectorAll('[data-upg]').forEach(b => b.onclick = () => buyUpgrade(b.dataset.upg));
 }
 function renderCodex(){
-  const discovered = Object.keys(state.codex).length;
-  const total = Object.keys(FAULTS).length;
-  const cards = Object.entries(FAULTS).map(([id, f]) => {
-    const known = !!state.codex[id];
-    if (!known){
-      return `<div class="codex-card undiscovered" data-rarity="${f.rarity}">
-        <div class="codex-head">
-          <span class="codex-ico">❓</span>
-          <div>
-            <div class="codex-name">Неизвестно</div>
-            <div class="codex-rarity">${RARITY_LABEL[f.rarity]}</div>
-          </div>
-        </div>
-        <div class="codex-body">Ещё не встречалось.</div>
-      </div>`;
-    }
-    return `<div class="codex-card" data-rarity="${f.rarity}">
-      <div class="codex-head">
-        <span class="codex-ico">${f.icon}</span>
-        <div>
-          <div class="codex-name">${f.name}</div>
-          <div class="codex-rarity">${RARITY_LABEL[f.rarity]} · ${f.part}</div>
-        </div>
-      </div>
-      <div class="codex-body">
-        <p><b>Симптомы:</b> ${f.symptoms.join(', ')}</p>
-        <p><b>Причины:</b> ${f.causes}</p>
-        <p><b>Отремонтировано:</b> ${state.codex[id].count} раз</p>
-      </div>
+  const subNav = `
+    <div class="cat-tabs" style="margin-bottom:14px">
+      <button data-codex="faults" class="${activeCodexTab === 'faults' ? 'active' : ''}">🔩 Неисправности</button>
+      <button data-codex="methods" class="${activeCodexTab === 'methods' ? 'active' : ''}">🔧 Методы ремонта</button>
     </div>`;
-  }).join('');
-  $('tab-codex').innerHTML = `
-    <div class="section-title">
-      <h2>📖 Кодекс неисправностей</h2>
-      <span class="muted">${discovered} / ${total} · бонус: +${(discovered * 2)}%</span>
-    </div>
-    <div class="progress" style="margin-bottom:16px"><div style="transform:scaleX(${discovered/total})"></div></div>
-    <div class="grid grid-3">${cards}</div>
-  `;
+  if (activeCodexTab === 'faults'){
+    const discovered = Object.keys(state.codex).length;
+    const total = Object.keys(FAULTS).length;
+    const cards = Object.entries(FAULTS).map(([id, f]) => {
+      const known = !!state.codex[id];
+      if (!known){
+        return `<div class="codex-card undiscovered" data-rarity="${f.rarity}"><div class="codex-head"><span class="codex-ico">❓</span><div><div class="codex-name">Неизвестно</div><div class="codex-rarity">${RARITY_LABEL[f.rarity]}</div></div></div><div class="codex-body">Ещё не встречалось.</div></div>`;
+      }
+      return `<div class="codex-card" data-rarity="${f.rarity}"><div class="codex-head"><span class="codex-ico">${f.icon}</span><div><div class="codex-name">${f.name}</div><div class="codex-rarity">${RARITY_LABEL[f.rarity]} · ${f.part}</div></div></div>
+        <div class="codex-body"><p><b>Симптомы:</b> ${f.symptoms.join(', ')}</p><p><b>Причины:</b> ${f.causes}</p><p><b>Отремонтировано:</b> ${state.codex[id].count} раз</p></div></div>`;
+    }).join('');
+    $('tab-codex').innerHTML = `${subNav}
+      <div class="section-title"><h2>📖 Кодекс неисправностей</h2><span class="muted">${discovered} / ${total}</span></div>
+      <p class="muted small">+2% к доходу за каждую открытую запись</p>
+      <div class="progress" style="margin:8px 0 16px"><div style="transform:scaleX(${discovered/total})"></div></div>
+      <div class="grid grid-3">${cards}</div>`;
+  } else {
+    const cards = REPAIR_STRATEGIES.map(s => {
+      const known = state.repairMethods && state.repairMethods[s.id];
+      const unlocked = isStrategyUnlocked(s);
+      if (!known){
+        return `<div class="codex-card undiscovered"><div class="codex-head"><span class="codex-ico">${s.icon}</span><div><div class="codex-name">${s.name}</div><div class="codex-rarity">${unlocked ? 'Доступен, но не использован' : 'Заблокирован'}</div></div></div><div class="codex-body">${unlocked ? 'Используйте метод в заказе, чтобы добавить его в кодекс.' : s.unlockDesc}</div></div>`;
+      }
+      return `<div class="codex-card" data-rarity="rare"><div class="codex-head"><span class="codex-ico">${s.icon}</span><div><div class="codex-name">${s.name}</div><div class="codex-rarity">Метод ремонта</div></div></div>
+        <div class="codex-body"><p>${s.desc}</p><p><b>Время:</b> ${s.time} · <b>Запчасти:</b> ${s.partsCost > 0 ? '−'+s.partsCost : (s.partsCost < 0 ? '+'+(-s.partsCost) : '0')}</p><p><b>Риск:</b> ${s.riskLabel}</p><p><b>Использован:</b> ${known.count} раз</p></div></div>`;
+    }).join('');
+    const known = Object.keys(state.repairMethods || {}).length;
+    $('tab-codex').innerHTML = `${subNav}
+      <div class="section-title"><h2>🔧 Методы ремонта</h2><span class="muted">${known} / ${REPAIR_STRATEGIES.length}</span></div>
+      <p class="muted small">+1% к доходу за каждый освоенный метод</p>
+      <div class="progress" style="margin:8px 0 16px"><div style="transform:scaleX(${known/REPAIR_STRATEGIES.length})"></div></div>
+      <div class="grid grid-2">${cards}</div>`;
+  }
+  $('tab-codex').querySelectorAll('[data-codex]').forEach(b => b.onclick = () => { activeCodexTab = b.dataset.codex; SoundManager.play('click'); render(); });
 }
 function renderAlbums(){
   const cards = ALBUMS.map(a => {
     const discovered = (state.albums[a.id] && state.albums[a.id].discovered) || [];
     const complete = state.albums[a.id] && state.albums[a.id].complete;
     return `<div class="album-card ${complete ? 'complete' : ''}">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span style="font-size:28px">${a.icon}</span>
-        <div>
-          <b>${a.name}</b>
-          <div class="muted small">${a.rewards}</div>
-        </div>
-      </div>
-      <div class="album-slots">
-        ${a.faults.map(fid => {
-          const filled = discovered.includes(fid);
-          const f = FAULTS[fid];
-          return `<div class="album-slot ${filled ? 'filled' : ''}">${filled ? f.icon : '?'}</div>`;
-        }).join('')}
-      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><span style="font-size:28px">${a.icon}</span><div><b>${a.name}</b><div class="muted small">${a.rewards}</div></div></div>
+      <div class="album-slots">${a.faults.map(fid => {
+        const filled = discovered.includes(fid);
+        const f = FAULTS[fid];
+        return `<div class="album-slot ${filled ? 'filled' : ''}">${filled ? f.icon : '?'}</div>`;
+      }).join('')}</div>
       <div class="small muted" style="margin-top:8px">${discovered.length} / ${a.faults.length}</div>
     </div>`;
   }).join('');
   const completeCount = ALBUMS.filter(a => state.albums[a.id] && state.albums[a.id].complete).length;
   $('tab-albums').innerHTML = `
-    <div class="section-title">
-      <h2>📚 Альбомы заказов</h2>
-      <span class="muted">${completeCount} / ${ALBUMS.length}</span>
-    </div>
+    <div class="section-title"><h2>📚 Альбомы заказов</h2><span class="muted">${completeCount} / ${ALBUMS.length}</span></div>
     <p class="muted">Собирайте редкие неисправности. Каждый собранный альбом даёт бонус к доходу.</p>
-    <div class="grid grid-3" style="margin-top:14px">${cards}</div>
-  `;
+    <div class="grid grid-3" style="margin-top:14px">${cards}</div>`;
 }
 function renderQuests(){
   const stagesHtml = STAGES.map(s => {
     const unlocked = state.money.gte(s.unlockMoney) || state.stage >= s.id;
     const current = state.stage === s.id;
+    const seen = state.seenStages.includes(s.id);
     return `<div class="card" style="${current ? 'border-color:rgba(255,207,116,.55)' : ''}">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
         <b>Этап ${s.id}: ${s.name}</b>
@@ -2422,16 +2176,31 @@ function renderQuests(){
       <p class="muted small">${s.desc}</p>
       <p class="small">Порог: ${fmt(s.unlockMoney)} ₽</p>
       ${current ? '<div class="pill" style="background:rgba(255,207,116,.18);color:var(--gold);border-color:rgba(255,207,116,.4)">Текущий этап</div>' : ''}
+      ${seen && STAGE_SCENES[s.id] ? `<details style="margin-top:8px"><summary class="small" style="cursor:pointer;color:var(--blue)">📜 История</summary><p class="small muted" style="margin-top:6px">${STAGE_SCENES[s.id].text}</p></details>` : ''}
     </div>`;
   }).join('');
   $('tab-quests').innerHTML = `
     <h2>🎯 Этапы развития мастерской</h2>
-    <p class="muted">Этапы разблокируются по мере роста состояния.</p>
-    <div class="grid grid-2" style="margin-top:14px">${stagesHtml}</div>
-  `;
+    <p class="muted">Этапы разблокируются по мере роста состояния. История открывается после прохождения.</p>
+    <div class="grid grid-2" style="margin-top:14px">${stagesHtml}</div>`;
 }
 function renderPrestige(){
-  const gain = prestigeXPGain();
+  const check = checkPrestigeConditions();
+  const { req, conds, allMet, reward, level } = check;
+  const income = totalIncome().toNumber();
+  const condRows = [
+    { label:'💰 Деньги', have: state.money.toNumber(), need: req.money, ok: conds.money, fmtVal: fmt(state.money), fmtNeed: fmt(req.money) },
+    { label:'📋 Заказов выполнено', have: state.totalOrders, need: req.orders, ok: conds.orders, fmtVal: fmtInt(state.totalOrders), fmtNeed: fmtInt(req.orders) },
+    { label:'⭐ Репутация', have: state.reputation.toNumber(), need: req.reputation, ok: conds.reputation, fmtVal: fmt(state.reputation), fmtNeed: fmt(req.reputation) },
+    { label:'📈 Доход в сек.', have: income, need: req.income, ok: conds.income, fmtVal: fmt(income), fmtNeed: fmt(req.income) },
+  ];
+  const condsHtml = condRows.map(c => {
+    const prog = clamp(c.have / c.need, 0, 1);
+    return `<div class="card" style="margin-bottom:8px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px"><b>${c.label}</b><span class="${c.ok ? 'good' : 'muted'} small">${c.ok ? '✓' : `${c.fmtVal} / ${c.fmtNeed}`}</span></div>
+      <div class="progress" style="margin:0"><div style="transform:scaleX(${prog})"></div></div>
+    </div>`;
+  }).join('');
   const upgrades = PRESTIGE_UPGRADES.map(u => {
     const lvl = state.prestigeUpgrades[u.id] || 0;
     const maxed = lvl >= u.maxLevel;
@@ -2439,87 +2208,68 @@ function renderPrestige(){
     const can = !maxed && state.xp.gte(cost);
     return `<div class="upg-card ${maxed ? 'bought' : (can ? '' : 'disabled')}" data-prestige="${u.id}">
       ${maxed ? '<div class="upg-badge max">MAX</div>' : (lvl > 0 ? `<div class="upg-badge">${lvl}/${u.maxLevel}</div>` : '')}
-      <div class="upg-head">
-        <span class="upg-ico">${u.icon}</span>
-        <span class="upg-name">${u.name}</span>
-      </div>
+      <div class="upg-head"><span class="upg-ico">${u.icon}</span><span class="upg-name">${u.name}</span></div>
       <div class="upg-desc">${u.desc}</div>
-      <div class="upg-foot">
-        <span class="upg-cost ${can || maxed ? '' : 'cant'}">${maxed ? 'МАКС' : '💎 ' + cost}</span>
-        <span class="upg-level">${lvl}/${u.maxLevel}</span>
-      </div>
+      <div class="upg-foot"><span class="upg-cost ${can || maxed ? '' : 'cant'}">${maxed ? 'МАКС' : '💎 ' + cost}</span><span class="upg-level">${lvl}/${u.maxLevel}</span></div>
     </div>`;
   }).join('');
   $('tab-prestige').innerHTML = `
     <div class="prestige-hero">
-      <div class="label">При следующем престиже</div>
-      <div class="value">💎 +${fmt(gain)}</div>
-      <div class="muted small" style="max-width:520px;margin:8px auto 0">Престиж сбрасывает деньги, персонал и апгрейды, но сохраняет 💎, достижения, кодекс, альбомы и престиж-улучшения.</div>
-      <button class="btn-xp" id="do-prestige" ${gain < 1 ? 'disabled' : ''}>🏆 Открыть филиал</button>
+      <div class="label">Открытие филиала №${level + 1}</div>
+      <div class="value">💎 +${reward}</div>
+      <div class="muted small" style="max-width:560px;margin:8px auto 0">Открытие нового филиала сбросит деньги, персонал и обычные улучшения, но сохранит 💎, достижения, кодекс, методы ремонта и престиж-улучшения.</div>
+      <button class="btn-xp" id="do-prestige" ${!allMet ? 'disabled' : ''} style="margin-top:14px">${allMet ? '🏆 Открыть филиал' : '⚠ Условия не выполнены'}</button>
     </div>
-    <h3>💎 Престиж-улучшения (${fmt(state.xp)} 💎 доступно)</h3>
-    <div class="grid grid-3" style="margin-top:10px">${upgrades}</div>
-  `;
-  $('tab-prestige').querySelectorAll('[data-prestige]').forEach(b => {
-    b.onclick = () => buyPrestigeUpgrade(b.dataset.prestige);
-  });
+    <h3>Требования для филиала №${level + 1}</h3>
+    <div style="margin-top:8px">${condsHtml}</div>
+    <h3 style="margin-top:18px">💎 Престиж-улучшения (${fmt(state.xp)} 💎 доступно)</h3>
+    <div class="grid grid-3" style="margin-top:10px">${upgrades}</div>`;
+  $('tab-prestige').querySelectorAll('[data-prestige]').forEach(b => b.onclick = () => buyPrestigeUpgrade(b.dataset.prestige));
   const dp = $('do-prestige');
   if (dp) dp.onclick = () => {
-    if (gain < 1) return;
-    showModal(
-      '🏆 Открыть филиал?',
-      `<p>Вы получите <b class="violet">💎 ${fmt(gain)}</b>.</p>
-       <p>Сбросится: деньги, персонал, улучшения.</p>
-       <p>Останется: 💎, достижения, кодекс, альбомы, престиж-улучшения.</p>`,
-      () => doPrestige()
-    );
+    if (!allMet || _prestigeInProgress) return;
+    showModal(`🏆 Открыть филиал №${level + 1}?`,
+      `<p>Вы получите <b class="violet">💎 +${reward}</b>.</p><p>Сбросится: деньги, персонал, улучшения.</p><p>Останется: 💎, достижения, кодекс, методы, престиж-улучшения.</p>`,
+      () => doPrestige());
   };
 }
 function renderStats(){
   const achList = ACHIEVEMENTS.map(a => {
     const unlocked = !!state.achievements[a.id];
-    return `<div class="ach ${unlocked ? 'unlocked' : 'locked'}">
-      <div class="ach-ico">${a.icon}</div>
-      <div>
-        <div class="ach-name">${a.name}</div>
-        <div class="ach-desc">${a.desc}</div>
-      </div>
-    </div>`;
+    return `<div class="ach ${unlocked ? 'unlocked' : 'locked'}"><div class="ach-ico">${a.icon}</div><div><div class="ach-name">${a.name}</div><div class="ach-desc">${a.desc}</div></div></div>`;
   }).join('');
   const staffTotal = STAFF.reduce((s, st) => s + (state.staff[st.id] || 0), 0);
   const upgTotal = Object.values(state.upgrades).reduce((a, b) => a + b, 0);
   const codexCount = Object.keys(state.codex).length;
+  const methodsCount = Object.keys(state.repairMethods || {}).length;
   const playH = Math.floor(state.playTime / 3600);
   const playM = Math.floor((state.playTime % 3600) / 60);
   $('tab-stats').innerHTML = `
     <h2>📊 Статистика</h2>
+    ${state.gameWon ? '<div class="card" style="background:linear-gradient(180deg,rgba(60,30,80,.5),rgba(30,16,44,.5));border-color:rgba(178,140,255,.5);margin-bottom:14px"><b>👑 Вы построили империю!</b><p class="muted small">Сюжетная линия завершена. Продолжайте играть — престиж, альбомы и достижения ждут.</p></div>' : ''}
     <div class="stat-grid" style="margin-top:12px">
       <div class="stat-box"><div class="label">Всего заработано</div><div class="value gold">${fmt(state.totalMoney)} ₽</div></div>
       <div class="stat-box"><div class="label">Заказов выполнено</div><div class="value">${fmtInt(state.totalOrders)}</div></div>
-      <div class="stat-box"><div class="label">Идеальных диагнозов</div><div class="value good">${fmtInt(state.perfectDiagnoses || 0)}</div></div>
-      <div class="stat-box"><div class="label">Идеальных ремонтов</div><div class="value good">${fmtInt(state.perfectRepairs || 0)}</div></div>
+      <div class="stat-box"><div class="label">Филиалов открыто</div><div class="value violet">${fmtInt(state.totalPrestiges)}</div></div>
+      <div class="stat-box"><div class="label">Неисправностей в кодексе</div><div class="value">${codexCount} / ${Object.keys(FAULTS).length}</div></div>
+      <div class="stat-box"><div class="label">Методов освоено</div><div class="value good">${methodsCount} / ${REPAIR_STRATEGIES.length}</div></div>
       <div class="stat-box"><div class="label">Сотрудников</div><div class="value cyan">${fmtInt(staffTotal)}</div></div>
       <div class="stat-box"><div class="label">Апгрейдов</div><div class="value blue">${fmtInt(upgTotal)}</div></div>
-      <div class="stat-box"><div class="label">Кодекс</div><div class="value">${codexCount} / ${Object.keys(FAULTS).length}</div></div>
-      <div class="stat-box"><div class="label">Престижей</div><div class="value violet">${fmtInt(state.totalPrestiges)}</div></div>
       <div class="stat-box"><div class="label">Время в игре</div><div class="value">${playH}ч ${playM}м</div></div>
-      <div class="stat-box"><div class="label">Текущий доход</div><div class="value good">${fmt(totalIncome())} ₽/сек</div></div>
+      <div class="stat-box"><div class="label">Доход в сек.</div><div class="value good">${fmt(totalIncome())} ₽</div></div>
+      <div class="stat-box"><div class="label">Идеальных диагнозов</div><div class="value good">${fmtInt(state.perfectDiagnoses || 0)}</div></div>
     </div>
     <h3>🏅 Достижения (${Object.keys(state.achievements).length} / ${ACHIEVEMENTS.length})</h3>
-    <div class="ach-grid" style="margin-top:10px">${achList}</div>
-  `;
+    <div class="ach-grid" style="margin-top:10px">${achList}</div>`;
 }
 function renderSettings(){
   const slotsHtml = [1,2,3].map(slot => {
     const saved = loadGame(slot);
     const active = state._slot === slot;
-    const meta = saved ? `₽${fmt(saved.totalMoney || 0)} · ${saved.totalPrestiges||0} престижей` : 'Пусто';
+    const meta = saved ? `₽${fmt(saved.totalMoney || 0)} · ${saved.totalPrestiges||0} филиалов` : 'Пусто';
     return `<div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <div>
-          <b>Слот ${slot} ${active ? '· <span class="gold">Активный</span>' : ''}</b>
-          <div class="muted small">${meta}</div>
-        </div>
+        <div><b>Слот ${slot} ${active ? '· <span class="gold">Активный</span>' : ''}</b><div class="muted small">${meta}</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${!active && saved ? `<button class="buy-btn" data-load="${slot}">Загрузить</button>` : ''}
           ${!active ? `<button class="buy-btn" data-switch="${slot}">Создать</button>` : ''}
@@ -2533,31 +2283,13 @@ function renderSettings(){
     <h2>⚙️ Настройки</h2>
     <h3>Звук</h3>
     <div class="card" style="margin-bottom:14px">
-      <div class="settings-row">
-        <label for="set-sound">🔊 Звуковые эффекты</label>
-        <input type="checkbox" id="set-sound" ${state.settings.sound !== false ? 'checked' : ''}>
-      </div>
-      <div class="settings-row">
-        <label for="set-volume">Громкость эффектов</label>
-        <input type="range" id="set-volume" min="0" max="100" value="${Math.round((state.settings.volume ?? 0.5) * 100)}">
-      </div>
-      <div class="settings-row">
-        <label for="set-music">🎵 Фоновая музыка ${!musicAvail ? '<span class="muted small">(файл не найден)</span>' : ''}</label>
-        <input type="checkbox" id="set-music" ${state.settings.music ? 'checked' : ''} ${!musicAvail ? 'disabled' : ''}>
-      </div>
-      <div class="settings-row">
-        <label for="set-music-volume">Громкость музыки</label>
-        <input type="range" id="set-music-volume" min="0" max="100" value="${Math.round((state.settings.musicVolume ?? 0.22) * 100)}" ${!musicAvail ? 'disabled' : ''}>
-      </div>
-      <p class="muted small" style="margin-top:8px">Положите MP3-файл в <code>assets/audio/workshop-theme.mp3</code> рядом с этим HTML — тогда музыка станет доступна.</p>
+      <div class="settings-row"><label for="set-sound">🔊 Звуковые эффекты</label><input type="checkbox" id="set-sound" ${state.settings.sound !== false ? 'checked' : ''}></div>
+      <div class="settings-row"><label for="set-volume">Громкость эффектов</label><input type="range" id="set-volume" min="0" max="100" value="${Math.round((state.settings.volume ?? 0.5) * 100)}"></div>
+      <div class="settings-row"><label for="set-music">🎵 Фоновая музыка ${!musicAvail ? '<span class="muted small">(файл не найден)</span>' : ''}</label><input type="checkbox" id="set-music" ${state.settings.music ? 'checked' : ''} ${!musicAvail ? 'disabled' : ''}></div>
+      <div class="settings-row"><label for="set-music-volume">Громкость музыки</label><input type="range" id="set-music-volume" min="0" max="100" value="${Math.round((state.settings.musicVolume ?? 0.22) * 100)}" ${!musicAvail ? 'disabled' : ''}></div>
     </div>
     <h3>Интерфейс</h3>
-    <div class="card" style="margin-bottom:14px">
-      <div class="settings-row">
-        <label for="set-anim">✨ Анимации</label>
-        <input type="checkbox" id="set-anim" ${state.settings.animations !== false ? 'checked' : ''}>
-      </div>
-    </div>
+    <div class="card" style="margin-bottom:14px"><div class="settings-row"><label for="set-anim">✨ Анимации</label><input type="checkbox" id="set-anim" ${state.settings.animations !== false ? 'checked' : ''}></div></div>
     <h3>Сохранения</h3>
     <div class="grid" style="gap:8px;margin-bottom:14px">${slotsHtml}</div>
     <h3>Экспорт / Импорт</h3>
@@ -2569,55 +2301,22 @@ function renderSettings(){
         <button class="buy-btn" id="do-import">📥 Импорт</button>
       </div>
     </div>
-    <div class="card" style="margin-top:14px">
-      <button class="buy-btn" style="border-color:rgba(255,120,120,.5);color:var(--red)" id="do-reset">⚠️ Полный сброс</button>
-    </div>
-  `;
-  $('set-sound').onchange = (e) => {
-    state.settings.sound = e.target.checked;
-    SoundManager.setEnabled(e.target.checked);
-    if (e.target.checked) SoundManager.play('click');
-    saveNow();
-  };
-  $('set-volume').oninput = (e) => {
-    state.settings.volume = Number(e.target.value) / 100;
-    SoundManager.setVolume(state.settings.volume);
-    saveNow();
-  };
+    <div class="card" style="margin-top:14px"><button class="buy-btn" style="border-color:rgba(255,120,120,.5);color:var(--red)" id="do-reset">⚠️ Полный сброс</button></div>`;
+  $('set-sound').onchange = (e) => { state.settings.sound = e.target.checked; SoundManager.setEnabled(e.target.checked); if (e.target.checked) SoundManager.play('click'); saveNow(); };
+  $('set-volume').oninput = (e) => { state.settings.volume = Number(e.target.value) / 100; SoundManager.setVolume(state.settings.volume); saveNow(); };
   $('set-volume').onchange = () => SoundManager.play('click');
-  $('set-music').onchange = (e) => {
-    state.settings.music = e.target.checked;
-    MusicManager.setEnabled(e.target.checked);
-    if (e.target.checked){
-      state._musicUsed = true;
-      SoundManager.play('music_start');
-    }
-    saveNow();
-    MusicManager.updateHeaderBtn();
-  };
-  $('set-music-volume').oninput = (e) => {
-    state.settings.musicVolume = Number(e.target.value) / 100;
-    MusicManager.setVolume(state.settings.musicVolume);
-    saveNow();
-  };
-  $('set-anim').onchange = (e) => {
-    state.settings.animations = e.target.checked;
-    saveNow();
-  };
+  $('set-music').onchange = (e) => { state.settings.music = e.target.checked; MusicManager.setEnabled(e.target.checked); if (e.target.checked){ state._musicUsed = true; SoundManager.play('music_start'); } saveNow(); MusicManager.updateHeaderBtn(); };
+  $('set-music-volume').oninput = (e) => { state.settings.musicVolume = Number(e.target.value) / 100; MusicManager.setVolume(state.settings.musicVolume); saveNow(); };
+  $('set-anim').onchange = (e) => { state.settings.animations = e.target.checked; saveNow(); };
   $('tab-settings').querySelectorAll('[data-load]').forEach(b => {
     b.onclick = () => {
       const slot = Number(b.dataset.load);
       showModal('Загрузить слот?', `Текущий прогресс будет заменён слотом ${slot}.`, () => {
-        saveNow();
-        const loaded = loadGame(slot);
+        saveNow(); const loaded = loadGame(slot);
         if (loaded){
-          state = loaded;
-          SoundManager.setEnabled(state.settings.sound !== false);
-          SoundManager.setVolume(state.settings.volume ?? 0.5);
-          MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
+          state = loaded; SoundManager.setEnabled(state.settings.sound !== false); SoundManager.setVolume(state.settings.volume ?? 0.5); MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
           if (state.settings.music) MusicManager.setEnabled(true);
-          render();
-          toast('✓ Слот загружен');
+          render(); toast('✓ Слот загружен');
         }
       });
     };
@@ -2626,45 +2325,21 @@ function renderSettings(){
     b.onclick = () => {
       const slot = Number(b.dataset.switch);
       showModal('Начать в новом слоте?', `Создать новую игру в слоте ${slot}?`, () => {
-        saveNow();
-        state = defaultState();
-        state._slot = slot;
-        state._firstRun = false;
-        saveNow();
-        MusicManager.setEnabled(false);
-        render();
-        toast('✓ Новый слот создан');
+        saveNow(); state = defaultState(); state._slot = slot; state._firstRun = false; saveNow(); MusicManager.setEnabled(false); render(); toast('✓ Новый слот создан');
       });
     };
   });
   $('tab-settings').querySelectorAll('[data-del]').forEach(b => {
     b.onclick = () => {
       const slot = Number(b.dataset.del);
-      showModal('Удалить слот?', `Удалить сохранение из слота ${slot}?`, () => {
-        deleteSave(slot);
-        render();
-        toast('Слот удалён');
-      });
+      showModal('Удалить слот?', `Удалить сохранение из слота ${slot}?`, () => { deleteSave(slot); render(); toast('Слот удалён'); });
     };
   });
-  $('do-export').onclick = () => {
-    try {
-      const data = btoa(unescape(encodeURIComponent(JSON.stringify(serializeState(state)))));
-      $('export-area').value = data;
-      toast('✓ Экспортировано');
-    } catch(e){ toast('❌ Ошибка экспорта'); }
-  };
+  $('do-export').onclick = () => { try { const data = btoa(unescape(encodeURIComponent(JSON.stringify(serializeState(state))))); $('export-area').value = data; toast('✓ Экспортировано'); } catch(e){ toast('❌ Ошибка экспорта'); } };
   $('do-copy').onclick = () => {
     const area = $('export-area');
-    if (!area.value){
-      try {
-        const data = btoa(unescape(encodeURIComponent(JSON.stringify(serializeState(state)))));
-        area.value = data;
-      } catch(e){ toast('❌ Ошибка'); return; }
-    }
-    area.select();
-    try { document.execCommand('copy'); toast('✓ Скопировано'); }
-    catch(e){ if (navigator.clipboard) navigator.clipboard.writeText(area.value); toast('✓ Скопировано'); }
+    if (!area.value){ try { area.value = btoa(unescape(encodeURIComponent(JSON.stringify(serializeState(state))))); } catch(e){ toast('❌ Ошибка'); return; } }
+    area.select(); try { document.execCommand('copy'); toast('✓ Скопировано'); } catch(e){ if (navigator.clipboard) navigator.clipboard.writeText(area.value); toast('✓ Скопировано'); }
   };
   $('do-import').onclick = () => {
     const val = $('export-area').value.trim();
@@ -2675,171 +2350,85 @@ function renderSettings(){
       if (!parsed || typeof parsed !== 'object') throw new Error('не объект');
       const restored = deserializeState(parsed);
       fresh = Object.assign(defaultState(), restored);
-      ['money','reputation','spareParts','xp','totalMoney','totalRepEarned','offlineEarningsTotal'].forEach(k => {
-        if (!(fresh[k] instanceof Decimal)) fresh[k] = dec(fresh[k] || 0);
-      });
+      ['money','reputation','spareParts','xp','totalMoney','totalRepEarned','offlineEarningsTotal'].forEach(k => { if (!(fresh[k] instanceof Decimal)) fresh[k] = dec(fresh[k] || 0); });
       const required = ['totalOrders','totalPrestiges','stage','playTime'];
-      for (const k of required){
-        const v = Number(fresh[k]);
-        if (!Number.isFinite(v) || v < 0) throw new Error(`поле ${k} некорректно`);
-      }
+      for (const k of required){ const v = Number(fresh[k]); if (!Number.isFinite(v) || v < 0) throw new Error(`поле ${k} некорректно`); }
       if (fresh.stage < 1 || fresh.stage > 6) throw new Error('этап вне диапазона');
-    } catch(e){
-      SoundManager.play('error');
-      toast('❌ Импорт отклонён: ' + e.message, 'event');
-      return;
-    }
+    } catch(e){ SoundManager.play('error'); toast('❌ Импорт отклонён: ' + e.message, 'event'); return; }
     showModal('Импортировать?', 'Текущий прогресс будет заменён. Продолжить?', () => {
-      state = fresh;
-      state._firstRun = false;
-      saveNow();
-      SoundManager.setEnabled(state.settings.sound !== false);
-      SoundManager.setVolume(state.settings.volume ?? 0.5);
-      MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
-      render();
-      toast('✓ Импортировано');
+      state = fresh; state._firstRun = false; saveNow(); SoundManager.setEnabled(state.settings.sound !== false); SoundManager.setVolume(state.settings.volume ?? 0.5); MusicManager.setVolume(state.settings.musicVolume ?? 0.22); render(); toast('✓ Импортировано');
     });
   };
-  $('do-reset').onclick = () => {
-    showModal('Полный сброс?', 'Всё будет удалено безвозвратно.', () => {
-      deleteSave(state._slot);
-      state = defaultState();
-      state._firstRun = false;
-      saveNow();
-      MusicManager.setEnabled(false);
-      render();
-      toast('Игра сброшена');
-    });
-  };
+  $('do-reset').onclick = () => { showModal('Полный сброс?', 'Всё будет удалено безвозвратно.', () => { deleteSave(state._slot); state = defaultState(); state._firstRun = false; saveNow(); MusicManager.setEnabled(false); render(); toast('Игра сброшена'); }); };
 }
 let modalCallback = null;
 function showModal(title, body, onOk, showCancel){
-  $('modal-title').textContent = title;
-  $('modal-body').innerHTML = body;
-  $('modal').classList.add('show');
+  $('modal-title').textContent = title; $('modal-body').innerHTML = body; $('modal').classList.add('show');
   modalCallback = typeof onOk === 'function' ? onOk : null;
-  if (showCancel === false){
-    $('modal-cancel').style.display = 'none';
-  } else {
-    $('modal-cancel').style.display = '';
-  }
+  $('modal-cancel').style.display = showCancel === false ? 'none' : '';
 }
 $('modal-cancel').onclick = () => { $('modal').classList.remove('show'); modalCallback = null; };
-$('modal-ok').onclick = () => {
-  const cb = modalCallback;
-  $('modal').classList.remove('show');
-  modalCallback = null;
-  if (typeof cb === 'function') cb();
-};
-$('modal').addEventListener('click', e => {
-  if (e.target === $('modal')){ $('modal').classList.remove('show'); modalCallback = null; }
-});
+$('modal-ok').onclick = () => { const cb = modalCallback; $('modal').classList.remove('show'); modalCallback = null; if (typeof cb === 'function') cb(); };
+$('modal').addEventListener('click', e => { if (e.target === $('modal')){ $('modal').classList.remove('show'); modalCallback = null; } });
 function toast(msg, type){
-  const el = document.createElement('div');
-  el.className = 'toast' + (type ? ' ' + type : '');
-  el.textContent = msg;
-  $('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 4000);
+  const el = document.createElement('div'); el.className = 'toast' + (type ? ' ' + type : ''); el.textContent = msg;
+  $('toasts').appendChild(el); setTimeout(() => el.remove(), 4000);
+}
+function floatTextAtCursor(text, color, targetEl){
+  if (state.settings.animations === false || reducedMotion) return;
+  const el = document.createElement('div'); el.className = 'float-text'; el.textContent = text; el.style.color = color;
+  let x, y;
+  if (targetEl){ const rect = targetEl.getBoundingClientRect(); x = rect.left + rect.width / 2; y = rect.top - 8; }
+  else { x = window.innerWidth / 2; y = window.innerHeight / 2; }
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  document.body.appendChild(el); setTimeout(() => el.remove(), 1500);
 }
 function uiUpdateLoop(t){
   rafId = requestAnimationFrame(uiUpdateLoop);
-  const dt = Math.min((t - lastFrameTime) / 1000, 0.5);
-  lastFrameTime = t;
+  const dt = Math.min((t - lastFrameTime) / 1000, 0.5); lastFrameTime = t;
   if (document.hidden) return;
   gameTick(dt);
   if (t - lastUITick >= 100){
-    lastUITick = t;
-    updateTopRes();
+    lastUITick = t; updateTopRes();
     if (activeTab === 'workshop'){
       const heroVal = document.querySelector('#tab-workshop .income-hero .value');
       if (heroVal) heroVal.textContent = `+${fmt(totalIncome())} ₽`;
       STAFF.forEach(st => {
-        const btn = document.querySelector(`[data-staff="${st.id}"]`);
-        if (!btn) return;
+        const btn = document.querySelector(`[data-staff="${st.id}"]`); if (!btn) return;
         const cost = staffCost(st);
-        btn.textContent = fmt(cost) + ' ₽';
-        btn.disabled = state.money.lt(cost);
-        btn.classList.toggle('cant', state.money.lt(cost));
+        btn.textContent = fmt(cost) + ' ₽'; btn.disabled = state.money.lt(cost); btn.classList.toggle('cant', state.money.lt(cost));
       });
-    }
-    if (activeTab === 'orders' && state.currentOrder && state.repair){
-      const progressBar = document.querySelector('#tab-orders .progress > div');
-      if (progressBar){
-        const total = FAULTS[state.currentOrder.faultId].fix.length;
-        progressBar.style.transform = `scaleX(${state.repair.placed.length / total})`;
-      }
     }
   }
 }
 function init(){
-  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-  reducedMotion = mq.matches;
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)'); reducedMotion = mq.matches;
   const loaded = loadGame(1);
   if (loaded){
-    state = loaded;
-    state._firstRun = false;
+    state = loaded; state._firstRun = false;
     if (reducedMotion) state.settings.animations = false;
-    SoundManager.setEnabled(state.settings.sound !== false);
-    SoundManager.setVolume(state.settings.volume ?? 0.5);
-    MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
+    SoundManager.setEnabled(state.settings.sound !== false); SoundManager.setVolume(state.settings.volume ?? 0.5); MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
     processOffline();
   } else {
-    state = defaultState();
-    state._slot = 1;
-    state._firstRun = false;
+    state = defaultState(); state._slot = 1; state._firstRun = false;
     if (reducedMotion) state.settings.animations = false;
-    SoundManager.setEnabled(state.settings.sound !== false);
-    SoundManager.setVolume(state.settings.volume ?? 0.5);
-    MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
+    SoundManager.setEnabled(state.settings.sound !== false); SoundManager.setVolume(state.settings.volume ?? 0.5); MusicManager.setVolume(state.settings.musicVolume ?? 0.22);
     setTimeout(() => toast('👋 Добро пожаловать! Начните с найма студента-практиканта', 'ach'), 500);
   }
-  if (state.activeEvent && now() >= state.activeEvent.expiresAt){
-    state.activeEvent = null;
-  }
-  checkDaily();
-  buildNav();
-  render();
-
-  // Кнопка музыки в шапке
+  if (state.activeEvent && now() >= state.activeEvent.expiresAt) state.activeEvent = null;
+  checkDaily(); buildNav(); render();
   const musicBtn = $('music-btn');
   if (musicBtn){
-    musicBtn.onclick = () => {
-      MusicManager.toggle();
-      if (state.settings.music){
-        state._musicUsed = true;
-        SoundManager.play('music_start');
-        saveNow();
-      }
-    };
+    musicBtn.onclick = () => { MusicManager.toggle(); if (state.settings.music){ state._musicUsed = true; SoundManager.play('music_start'); saveNow(); } };
   }
   MusicManager.updateHeaderBtn();
-
-  // Пауза музыки при скрытии вкладки
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden){
-      // Мягкая пауза — только если играет
-      if (MusicManager.playing){
-        try { const a = document.querySelector('audio'); } catch(e){}
-        // Мягкая остановка через паузу
-        // Ничего не делаем — браузер сам приглушает в фоне; управляем через Audio
-      }
-    }
-  });
-
-  lastFrameTime = performance.now();
-  rafId = requestAnimationFrame(uiUpdateLoop);
+  lastFrameTime = performance.now(); rafId = requestAnimationFrame(uiUpdateLoop);
 }
 try {
   init();
 } catch (e) {
   console.error('Не удалось запустить игру:', e);
-  document.body.innerHTML = `
-    <div style="padding:40px;color:#ff8a8a;font:16px system-ui;text-align:center;background:#0a0f16;min-height:100vh">
-      <h2>⚠️ Ошибка запуска игры</h2>
-      <pre style="text-align:left;background:#111;padding:16px;border-radius:8px;overflow:auto;max-width:600px;margin:20px auto;font-size:12px">${e.message}\n\n${(e.stack || '').slice(0, 800)}</pre>
-      <button onclick="localStorage.clear();location.reload()" style="padding:10px 20px;border-radius:8px;background:#7be0a1;color:#0a1a11;font-weight:700;border:none;cursor:pointer">Полный сброс и перезапуск</button>
-    </div>
-  `;
+  document.body.innerHTML = `<div style="padding:40px;color:#ff8a8a;font:16px system-ui;text-align:center;background:#0a0f16;min-height:100vh"><h2>⚠️ Ошибка запуска игры</h2><pre style="text-align:left;background:#111;padding:16px;border-radius:8px;overflow:auto;max-width:600px;margin:20px auto;font-size:12px">${e.message}\n\n${(e.stack || '').slice(0, 800)}</pre><button onclick="localStorage.clear();location.reload()" style="padding:10px 20px;border-radius:8px;background:#7be0a1;color:#0a1a11;font-weight:700;border:none;cursor:pointer">Полный сброс и перезапуск</button></div>`;
 }
 </script>
 </body>
